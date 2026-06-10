@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "983099640666",
+    "project_id": "mobin-7241d",
+    "storage_bucket": "mobin-7241d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:983099640666:android:abf1c83d9c9755719e4163",
+        "android_client_info": {
+          "package_name": "com.example.tugasakhirmobel"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7HiTKakU6c5khFxRCLTwRo8wllhvqKBA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
