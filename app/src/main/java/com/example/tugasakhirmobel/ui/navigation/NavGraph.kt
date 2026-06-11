@@ -34,13 +34,14 @@ fun SetupNavGraph(
         composable(route = ScreenRoutes.Dashboard.route) {
             DashboardScreen(
                 onLogoutClick = {
-                    navController.navigate(ScreenRoutes.Login.route) {
-                        popUpTo(ScreenRoutes.Dashboard.route) { inclusive = true }
+                    // Navigate back to login or perform logout logic
+                    navController.navigate("login") {
+                        popUpTo("dashboard") { inclusive = true }
                     }
                 },
                 onPingClick = {
-                    // CALL THE VIEWMODEL FUNCTION HERE
-                    authViewModel.testKoneksiKeFastAPI()
+                    // Call your API test function here
+                    println("Ping button clicked")
                 }
             )
         }
