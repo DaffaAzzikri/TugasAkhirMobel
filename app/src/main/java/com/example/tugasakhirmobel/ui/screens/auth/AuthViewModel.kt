@@ -50,26 +50,27 @@ class AuthViewModel : ViewModel() {
                     _authState.value = AuthState.Error(pesanError)
                 }
             }
-        fun testKoneksiKeFastAPI() {
-            viewModelScope.launch {
-                try {
-                    // 1. Buat koneksi lewat RetrofitClient yang sudah dipasangi Interceptor
-                    val apiService = RetrofitClient.instance.create(AuthApiService::class.java)
+    }
+    fun testKoneksiKeFastAPI() {
+        viewModelScope.launch {
+            try {
+                _authState.value = AuthState.Loading // Optional: Show loading on UI
 
-                    // 2. Tembak endpoint-nya
-                    val response = apiService.pingServer()
+                val apiService = RetrofitClient.instance.create(AuthApiService::class.java)
+                val response = apiService.pingServer()
 
-                    // 3. Cek apakah FastAPI merespons dengan 200 OK
-                    if (response.isSuccessful) {
-                        val data = response.body()
-                        println("🔥 PING BERHASIL! Server membalas: $data")
-                    } else {
-                        println("❌ PING DITOLAK! Kode error: ${response.code()} - ${response.errorBody()?.string()}")
-                    }
-                } catch (e: Exception) {
-                    // Biasanya masuk sini jika server belum menyala atau salah IP
-                    println("☠️ PING GAGAL TOTAL (Server mati / Masalah Jaringan): ${e.localizedMessage}")
+                if (response.isSuccessful) {
+                    val data = response.body()
+                    println("🔥 PING BERHASIL! Server membalas: $data")
+                    _authState.value = AuthState.Success
+                } else {
+                    val errorMsg = "Kode error: ${response.code()}"
+                    println("❌ PING DITOLAK! $errorMsg")
+                    _authState.value = AuthState.Error(errorMsg)
                 }
+            } catch (e: Exception) {
+                println("☠️ PING GAGAL: ${e.localizedMessage}")
+                _authState.value = AuthState.Error("Server Mati / No Connection")
             }
         }
     }

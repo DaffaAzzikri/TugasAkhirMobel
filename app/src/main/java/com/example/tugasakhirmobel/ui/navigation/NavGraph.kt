@@ -32,7 +32,17 @@ fun SetupNavGraph(
 
         // Rute Layar Dashboard
         composable(route = ScreenRoutes.Dashboard.route) {
-            DashboardScreen()
+            DashboardScreen(
+                onLogoutClick = {
+                    navController.navigate(ScreenRoutes.Login.route) {
+                        popUpTo(ScreenRoutes.Dashboard.route) { inclusive = true }
+                    }
+                },
+                onPingClick = {
+                    // CALL THE VIEWMODEL FUNCTION HERE
+                    authViewModel.testKoneksiKeFastAPI()
+                }
+            )
         }
     }
 }
