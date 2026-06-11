@@ -10,7 +10,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun DashboardScreen() {
+fun DashboardScreen(
+    onLogoutClick: () -> Unit,
+    onPingClick: () -> Unit // Tambahan parameter untuk fungsi Ping Server
+) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -31,8 +34,25 @@ fun DashboardScreen() {
             color = MaterialTheme.colorScheme.secondary
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(48.dp))
+
+        // --- TUGAS 1: Tombol Test Koneksi API ---
+        Button(
+            onClick = onPingClick,
+            modifier = Modifier.fillMaxWidth(0.6f)
+        ) {
+            Text(text = "Test Koneksi API")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Tombol untuk kembali (Logout)
+        Button(
+            onClick = onLogoutClick,
+            modifier = Modifier.fillMaxWidth(0.6f),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+        ) {
+            Text(text = "Keluar / Logout")
+        }
     }
 }
