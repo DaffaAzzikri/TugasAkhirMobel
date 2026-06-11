@@ -1,10 +1,14 @@
 package com.example.tugasakhirmobel.ui.screens.auth
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.tugasakhirmobel.data.remote.RetrofitClient
+import com.example.tugasakhirmobel.data.remote.api.AuthApiService
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 // 1. Membungkus status layar (State) agar UI Compose mudah bereaksi
 sealed class AuthState {
@@ -46,6 +50,28 @@ class AuthViewModel : ViewModel() {
                     _authState.value = AuthState.Error(pesanError)
                 }
             }
+        fun testKoneksiKeFastAPI() {
+            viewModelScope.launch {
+                try {
+                    // 1. Buat koneksi lewat RetrofitClient yang sudah dipasangi Interceptor
+                    val apiService = RetrofitClient.instance.create(AuthApiService::class.java)
+
+                    // 2. Tembak endpoint-nya
+                    val response = apiService.pingServer()
+
+                    // 3. Cek apakah FastAPI merespons dengan 200 OK
+                    if (response.isSuccessful) {
+                        val data = response.body()
+                        println("🔥 PING BERHASIL! Server membalas: $data")
+                    } else {
+                        println("❌ PING DITOLAK! Kode error: ${response.code()} - ${response.errorBody()?.string()}")
+                    }
+                } catch (e: Exception) {
+                    // Biasanya masuk sini jika server belum menyala atau salah IP
+                    println("☠️ PING GAGAL TOTAL (Server mati / Masalah Jaringan): ${e.localizedMessage}")
+                }
+            }
+        }
     }
 
     // Fungsi untuk mereset status (berguna jika user sudah menutup pop-up error)
