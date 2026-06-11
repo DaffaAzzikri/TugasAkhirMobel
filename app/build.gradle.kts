@@ -1,3 +1,5 @@
+import com.android.build.gradle.ProguardFiles.getDefaultProguardFile
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -10,9 +12,8 @@ plugins {
 
 android {
     namespace = "com.example.tugasakhirmobel"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
+
 
     defaultConfig {
         applicationId = "com.example.tugasakhirmobel"
@@ -31,6 +32,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+    }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
         }
     }
     compileOptions {
@@ -76,7 +82,7 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
 
-    implementation("com.cloudinary:cloudinary-android:2.5.0")
+    implementation("com.cloudinary:cloudinary-android:3.1.2")
 
     implementation("androidx.compose.material:material-icons-extended")
 
