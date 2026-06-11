@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
-// Pembungkus status layar (tetap sama)
+// Pembungkus status layar
 sealed class AuthState {
     object Idle : AuthState()
     object Loading : AuthState()
@@ -20,9 +20,9 @@ sealed class AuthState {
     data class Error(val message: String) : AuthState()
 }
 
-@HiltViewModel // <-- Beritahu Hilt bahwa ini adalah ViewModel
+@HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val repository: AuthRepository // <-- Hilt otomatis memasukkan ini!
+    private val repository: AuthRepository
 ) : ViewModel() {
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
@@ -50,28 +50,29 @@ class AuthViewModel @Inject constructor(
                 }
             )
         }
-        fun testKoneksiKeFastAPI() {
-            viewModelScope.launch {
-                try {
-                    _authState.value = AuthState.Loading
-                    val apiService = RetrofitClient.instance.create(AuthApiService::class.java)
-                    val response = apiService.pingServer()
+    } // <-- PERBAIKAN: Di sini fungsi login() harusnya ditutup!
 
-                    if (response.isSuccessful) {
-                        println("🔥 PING BERHASIL: ${response.body()}")
-                        _authState.value = AuthState.Success
-                    } else {
-                        _authState.value = AuthState.Error("Gagal: ${response.code()}")
-                    }
-                } catch (e: Exception) {
-                    _authState.value = AuthState.Error("Koneksi Error: ${e.message}")
+    // SEKARANG FUNGSI INI SUDAH SEJAJAR DI DALAM CLASS VIEWMODEL
+    fun testKoneksiKeFastAPI() {
+        viewModelScope.launch {
+            try {
+                _authState.value = AuthState.Loading
+                val apiService = RetrofitClient.instance.create(AuthApiService::class.java)
+                val response = apiService.pingServer()
+
+                if (response.isSuccessful) {
+                    println("🔥 PING BERHASIL: ${response.body()}")
+                    _authState.value = AuthState.Success
+                } else {
+                    _authState.value = AuthState.Error("Gagal: ${response.code()}")
                 }
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error("Koneksi Error: ${e.message}")
             }
-
         }
+    }
 
-        fun resetState() {
-            _authState.value = AuthState.Idle
-        }
+    fun resetState() {
+        _authState.value = AuthState.Idle
     }
 }

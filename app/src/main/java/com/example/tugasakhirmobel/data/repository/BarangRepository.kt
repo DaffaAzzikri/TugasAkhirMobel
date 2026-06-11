@@ -1,14 +1,16 @@
 package com.example.tugasakhirmobel.data.repository
 
 import android.net.Uri
-import com.example.tugasakhirmobel.data.remote.api.BarangApiService// Sesuaikan import
+import com.example.tugasakhirmobel.data.remote.api.BarangApiService
 import com.example.tugasakhirmobel.data.remote.RetrofitClient
 import com.example.tugasakhirmobel.data.remote.media.CloudinaryHelper
 import com.example.tugasakhirmobel.data.remote.model.BarangRequest
-import kotlin.jvm.java
+// 1. TAMBAHKAN IMPORT INJECT & SINGLETON DI SINI
+import javax.inject.Inject
+import javax.inject.Singleton
 
-
-class BarangRepository {
+@Singleton // Membuat repository ini bersifat tunggal di seluruh aplikasi (hemat memori)
+class BarangRepository @Inject constructor() { // 2. PERBAIKAN: Tambahkan @Inject constructor()
 
     // Panggil mesin Retrofit untuk mengakses endpoint FastAPI
     private val apiService = RetrofitClient.instance.create(BarangApiService::class.java)
