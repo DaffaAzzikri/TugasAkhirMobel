@@ -3,12 +3,15 @@ package com.example.tugasakhirmobel
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.tugasakhirmobel.ui.navigation.SetupNavGraph
 import com.example.tugasakhirmobel.ui.screens.auth.AuthViewModel
 import com.example.tugasakhirmobel.ui.theme.TugasAkhirMobelTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint // <-- Beritahu Hilt bahwa layar ini akan memakai ViewModel yang disuntik
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -16,7 +19,7 @@ class MainActivity : ComponentActivity() {
             TugasAkhirMobelTheme { // Nama tema mungkin berbeda tergantung nama proyek Anda
                 // Inisialisasi pengontrol rute dan otak logika
                 val navController = rememberNavController()
-                val authViewModel: AuthViewModel = viewModel()
+                val authViewModel: AuthViewModel = hiltViewModel()
 
                 // Pasang jalan tolnya
                 SetupNavGraph(
