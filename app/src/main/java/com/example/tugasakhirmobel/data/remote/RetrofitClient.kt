@@ -8,24 +8,25 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
-    private const val BASE_URL = "http://10.0.2.2:8000/"
-     private val loggingInterceptor = HttpLoggingInterceptor().apply {
+    // Perbaikan: Base URL harus diawali dengan http:// atau https:// dan diakhiri dengan /
+    private const val BASE_URL = "http://192.168.100.213:40269/"
+    
+    private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
     }
 
     private val okHttpClient = OkHttpClient.Builder()
-        .addInterceptor(FirebaseAuthInterceptor()) // <-- Di sini agen rahasianya dipasang!
+        .addInterceptor(FirebaseAuthInterceptor())
         .addInterceptor(loggingInterceptor)
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .build()
 
-    // 3. Bangun Retrofit
     val instance: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create()) // Pengurai JSON
+            .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
 }
