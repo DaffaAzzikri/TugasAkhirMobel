@@ -4,13 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tugasakhirmobel.data.remote.RetrofitClient
 import com.example.tugasakhirmobel.data.remote.api.AuthApiService
-import com.google.firebase.auth.FirebaseAuth
+import com.example.tugasakhirmobel.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-// 1. Membungkus status layar (State) agar UI Compose mudah bereaksi
+// Pembungkus status layar (tetap sama)
 sealed class AuthState {
     object Idle : AuthState()
     object Loading : AuthState()
@@ -18,65 +20,58 @@ sealed class AuthState {
     data class Error(val message: String) : AuthState()
 }
 
-class AuthViewModel : ViewModel() {
-
-    // Inisialisasi Firebase Auth
-    private val auth = FirebaseAuth.getInstance()
-
-    // 2. Tempat menyimpan status saat ini
+@HiltViewModel // <-- Beritahu Hilt bahwa ini adalah ViewModel
+class AuthViewModel @Inject constructor(
+    private val repository: AuthRepository // <-- Hilt otomatis memasukkan ini!
+) : ViewModel() {
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
-    // 3. Fungsi utama yang akan dipanggil saat tombol "Masuk" ditekan
     fun login(email: String, sandi: String) {
-        // Validasi dasar
         if (email.isBlank() || sandi.isBlank()) {
             _authState.value = AuthState.Error("Email dan kata sandi tidak boleh kosong!")
             return
         }
 
-        // Ubah status menjadi loading (UI bisa memunculkan indikator berputar)
         _authState.value = AuthState.Loading
 
-        // Tembak data ke Firebase
-        auth.signInWithEmailAndPassword(email, sandi)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    // Berhasil! Sesi langsung otomatis dikunci oleh Firebase di HP
+        // Jalankan perintah ke Repositori di background thread
+        viewModelScope.launch {
+            val hasil = repository.doLogin(email, sandi)
+
+            // Evaluasi hasil dari Repositori
+            hasil.fold(
+                onSuccess = { uid ->
                     _authState.value = AuthState.Success
-                } else {
-                    // Gagal, tangkap pesan error dari Firebase
-                    val pesanError = task.exception?.localizedMessage ?: "Terjadi kesalahan saat login"
+                },
+                onFailure = { error ->
+                    val pesanError = error.localizedMessage ?: "Terjadi kesalahan saat login"
                     _authState.value = AuthState.Error(pesanError)
                 }
-            }
-    }
-    fun testKoneksiKeFastAPI() {
-        viewModelScope.launch {
-            try {
-                _authState.value = AuthState.Loading // Optional: Show loading on UI
-
-                val apiService = RetrofitClient.instance.create(AuthApiService::class.java)
-                val response = apiService.pingServer()
-
-                if (response.isSuccessful) {
-                    val data = response.body()
-                    println("🔥 PING BERHASIL! Server membalas: $data")
-                    _authState.value = AuthState.Success
-                } else {
-                    val errorMsg = "Kode error: ${response.code()}"
-                    println("❌ PING DITOLAK! $errorMsg")
-                    _authState.value = AuthState.Error(errorMsg)
-                }
-            } catch (e: Exception) {
-                println("☠️ PING GAGAL: ${e.localizedMessage}")
-                _authState.value = AuthState.Error("Server Mati / No Connection")
-            }
+            )
         }
-    }
+        fun testKoneksiKeFastAPI() {
+            viewModelScope.launch {
+                try {
+                    _authState.value = AuthState.Loading
+                    val apiService = RetrofitClient.instance.create(AuthApiService::class.java)
+                    val response = apiService.pingServer()
 
-    // Fungsi untuk mereset status (berguna jika user sudah menutup pop-up error)
-    fun resetState() {
-        _authState.value = AuthState.Idle
+                    if (response.isSuccessful) {
+                        println("🔥 PING BERHASIL: ${response.body()}")
+                        _authState.value = AuthState.Success
+                    } else {
+                        _authState.value = AuthState.Error("Gagal: ${response.code()}")
+                    }
+                } catch (e: Exception) {
+                    _authState.value = AuthState.Error("Koneksi Error: ${e.message}")
+                }
+            }
+
+        }
+
+        fun resetState() {
+            _authState.value = AuthState.Idle
+        }
     }
 }
