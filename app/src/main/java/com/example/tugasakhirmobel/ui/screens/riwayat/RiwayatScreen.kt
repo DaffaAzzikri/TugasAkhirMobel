@@ -176,7 +176,7 @@ fun StatBox(modifier: Modifier = Modifier, icon: ImageVector, count: String, lab
 
 @Composable
 fun FilterTab(text: String, isSelected: Boolean, onClick: () -> Unit, isGradient: Boolean = false) {
-    val gradientBrush = Brush.horizontalGradient(listOf(Color(0xFF3F1A9C), Color(0xFFC62828)))
+    val gradientBrush = Brush.horizontalGradient(listOf(Color(0xFF6A1B9A), Color(0xFFC62828)))
 
     Box(
         modifier = Modifier

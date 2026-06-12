@@ -22,6 +22,7 @@ import com.example.tugasakhirmobel.ui.screens.browse.BrowseScreen
 import com.example.tugasakhirmobel.ui.screens.riwayat.RiwayatScreen
 import com.example.tugasakhirmobel.ui.screens.profil.ProfileScreen
 import com.example.tugasakhirmobel.ui.screens.profil.ManajemenAkunScreen
+import com.example.tugasakhirmobel.ui.screens.log.LogScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.unit.dp
@@ -143,14 +144,11 @@ fun SetupNavGraph(
             composable(route = ScreenRoutes.Browse.route) {
                 BrowseScreen(onAddClick = { navController.navigate(ScreenRoutes.ProductForm.route) })
             }
-
-            // --- RUTE DUMMY SEMENTARA UNTUK MENU NAVBAR LAINNYA ---
             composable(route = ScreenRoutes.Riwayat.route) {
                 RiwayatScreen()
             }
             composable(route = ScreenRoutes.Log.route) {
-                // TODO: Buat LogScreen nanti
-                Box(modifier = Modifier.fillMaxSize()) { Text("Halaman Log (Belum Dibuat)") }
+                LogScreen()
             }
             composable(route = ScreenRoutes.Profil.route) {
                 ProfileScreen(
@@ -164,7 +162,6 @@ fun SetupNavGraph(
                     }
                 )
             }
-
             composable(route = "manajemen_akun") {
                 ManajemenAkunScreen(onBackClick = { navController.popBackStack() })
             }

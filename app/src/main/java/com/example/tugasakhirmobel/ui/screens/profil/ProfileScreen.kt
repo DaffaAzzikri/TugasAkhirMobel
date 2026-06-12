@@ -34,7 +34,7 @@ fun ProfileScreen(
     val userEmail = "superadmin@mobel.id"
 
     val gradientPurple = Brush.horizontalGradient(
-        colors = listOf(Color(0xFF3F51B5), Color(0xFFE91E63))
+        colors = listOf(Color(0xFF6A1B9A), Color(0xFFE91E63))
     )
 
     Column(
@@ -48,7 +48,7 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(260.dp)
-                .background(Brush.horizontalGradient(listOf(Color(0xFF1565C0), Color(0xFFC62828)))),
+                .background(Brush.horizontalGradient(listOf(Color(0xFF6A1B9A), Color(0xFFC62828)))),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
