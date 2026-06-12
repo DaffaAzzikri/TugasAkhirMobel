@@ -17,9 +17,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.tugasakhirmobel.ui.screens.auth.AuthViewModel
 import com.example.tugasakhirmobel.ui.screens.auth.LoginScreen
 import com.example.tugasakhirmobel.ui.screens.dashboard.DashboardScreen
-import com.example.tugasakhirmobel.ui.screens.barang.BarangViewModel
 import com.example.tugasakhirmobel.ui.screens.barang.FormBarangScreen
 import com.example.tugasakhirmobel.ui.screens.browse.BrowseScreen
+import com.example.tugasakhirmobel.ui.screens.riwayat.RiwayatScreen
+import com.example.tugasakhirmobel.ui.screens.profil.ProfileScreen
+import com.example.tugasakhirmobel.ui.screens.profil.ManajemenAkunScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.unit.dp
@@ -144,16 +146,27 @@ fun SetupNavGraph(
 
             // --- RUTE DUMMY SEMENTARA UNTUK MENU NAVBAR LAINNYA ---
             composable(route = ScreenRoutes.Riwayat.route) {
-                // TODO: Buat RiwayatScreen nanti
-                Box(modifier = Modifier.fillMaxSize()) { Text("Halaman Riwayat (Belum Dibuat)") }
+                RiwayatScreen()
             }
             composable(route = ScreenRoutes.Log.route) {
                 // TODO: Buat LogScreen nanti
                 Box(modifier = Modifier.fillMaxSize()) { Text("Halaman Log (Belum Dibuat)") }
             }
             composable(route = ScreenRoutes.Profil.route) {
-                // TODO: Buat ProfilScreen nanti
-                Box(modifier = Modifier.fillMaxSize()) { Text("Halaman Profil (Belum Dibuat)") }
+                ProfileScreen(
+                    onLogoutClick = {
+                        navController.navigate(ScreenRoutes.Login.route) {
+                            popUpTo(0)
+                        }
+                    },
+                    onManageAccountClick = {
+                        navController.navigate("manajemen_akun") // Rute baru
+                    }
+                )
+            }
+
+            composable(route = "manajemen_akun") {
+                ManajemenAkunScreen(onBackClick = { navController.popBackStack() })
             }
         }
     }

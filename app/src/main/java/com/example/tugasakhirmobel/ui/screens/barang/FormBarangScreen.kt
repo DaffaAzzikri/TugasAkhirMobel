@@ -36,38 +36,35 @@ fun FormBarangScreen(
     onCloseClick: () -> Unit
 ) {
     val context = LocalContext.current
-
-    // Membaca status aliran data dari otak ViewModel milik Daffa
     val state by viewModel.barangState.collectAsState()
 
-    // State penampung input komponen UI
     var productName by remember { mutableStateOf("") }
     var currentStock by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
 
-    // State pembantu dummy yang tidak ada di DB FastAPI Daffa tapi ada di desain awal Anda
     var sku by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
     var supplier by remember { mutableStateOf("") }
 
-    // Registrasi mesin peluncur galeri internal Android
+    // State khusus untuk Dropdown Kategori
+    var category by remember { mutableStateOf("") }
+    val daftarKategoriForm = listOf("Elektronik", "Furnitur", "ATK", "Pakaian", "Makanan & Minuman", "Peralatan")
+
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri -> if (uri != null) imageUri = uri }
     )
 
-    // Detektor Status Aksi (Menampilkan Efek Samping Berhasil / Gagal)
     LaunchedEffect(state) {
         when (state) {
             is BarangState.Success -> {
                 Toast.makeText(context, "Barang berhasil disimpan!", Toast.LENGTH_SHORT).show()
                 viewModel.resetState()
-                onCloseClick() // Otomatis balik ke halaman utama
+                onCloseClick()
             }
             is BarangState.Error -> {
                 Toast.makeText(context, (state as BarangState.Error).message, Toast.LENGTH_LONG).show()
-                viewModel.resetState() // Kembalikan ke posisi Idle agar tidak memicu loop alert
+                viewModel.resetState()
             }
             else -> {}
         }
@@ -80,10 +77,7 @@ fun FormBarangScreen(
                 actions = {
                     IconButton(
                         onClick = onCloseClick,
-                        modifier = Modifier
-                            .padding(end = 8.dp)
-                            .background(Color(0xFFF5F5F5), CircleShape)
-                            .size(36.dp)
+                        modifier = Modifier.padding(end = 8.dp).background(Color(0xFFF5F5F5), CircleShape).size(36.dp)
                     ) {
                         Icon(Icons.Default.Close, contentDescription = "Close", modifier = Modifier.size(20.dp))
                     }
@@ -102,7 +96,7 @@ fun FormBarangScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // --- 1. KOMPONEN FOTO PRODUK (AMBIL DARI GALERI HP) ---
+                // --- 1. KOMPONEN FOTO PRODUK ---
                 CustomLabel("Foto Barang *")
                 Box(
                     modifier = Modifier
@@ -111,14 +105,11 @@ fun FormBarangScreen(
                         .background(Color(0xFFF1F4F9), RoundedCornerShape(16.dp))
                         .clip(RoundedCornerShape(16.dp))
                         .clickable {
-                            photoPickerLauncher.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                            )
+                            photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                         },
                     contentAlignment = Alignment.Center
                 ) {
                     if (imageUri != null) {
-                        // Tampilkan gambar asli dari penyimpanan internal HP Anda
                         Image(
                             painter = rememberAsyncImagePainter(imageUri),
                             contentDescription = "Preview Gambar",
@@ -126,7 +117,6 @@ fun FormBarangScreen(
                             contentScale = ContentScale.Crop
                         )
                     } else {
-                        // Tampilan default petunjuk unggah gambar
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Default.CloudUpload, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(36.dp))
                             Spacer(modifier = Modifier.height(8.dp))
@@ -143,9 +133,14 @@ fun FormBarangScreen(
                 CustomLabel("SKU *")
                 CustomInputField(value = sku, onValueChange = { sku = it }, placeholder = "Kode SKU")
 
-                // --- 4. KATEGORI ---
+                // --- 4. KATEGORI (MENGGUNAKAN DROPDOWN) ---
                 CustomLabel("Kategori *")
-                CustomInputField(value = category, onValueChange = { category = it }, placeholder = "Pilih kategori")
+                CustomDropdownField(
+                    value = category,
+                    onValueChange = { category = it },
+                    options = daftarKategoriForm,
+                    placeholder = "Pilih kategori"
+                )
 
                 // --- 5. HARGA & SUPPLIER ---
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -159,7 +154,7 @@ fun FormBarangScreen(
                     }
                 }
 
-                // --- 6. STOK SAAT INI (Tersambung ke Validasi Tipe Data Daffa) ---
+                // --- 6. STOK ---
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     Column(modifier = Modifier.weight(1f)) {
                         CustomLabel("Stok Saat Ini *")
@@ -173,7 +168,7 @@ fun FormBarangScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // --- 7. TOMBOL AKSI UTAMA ---
+                // --- 7. TOMBOL AKSI ---
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     Button(
                         onClick = onCloseClick,
@@ -199,12 +194,9 @@ fun FormBarangScreen(
                 Spacer(modifier = Modifier.height(40.dp))
             }
 
-            // --- LAYER INDIKATOR LOADING BERPUTAR (Kombinasi Saat Sistem Bekerja) ---
             if (state is BarangState.Loading) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.3f)),
+                    modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f)),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(color = Color.White)
@@ -219,6 +211,7 @@ fun CustomLabel(text: String) {
     Text(text = text, fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(start = 4.dp, bottom = 4.dp))
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomInputField(value: String, onValueChange: (String) -> Unit, placeholder: String) {
     TextField(
@@ -236,4 +229,55 @@ fun CustomInputField(value: String, onValueChange: (String) -> Unit, placeholder
         ),
         singleLine = true
     )
+}
+
+// --- KOMPONEN BARU UNTUK DROPDOWN MENU FORM ---
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CustomDropdownField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    options: List<String>,
+    placeholder: String
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        TextField(
+            value = value,
+            onValueChange = {}, // Read-only karena ini dropdown
+            readOnly = true,
+            placeholder = { Text(placeholder, fontSize = 14.sp, color = Color.Gray) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.fillMaxWidth().menuAnchor(), // menuAnchor penting agar menu nempel ke textfield
+            shape = RoundedCornerShape(16.dp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0xFFF1F4F9),
+                unfocusedContainerColor = Color(0xFFF1F4F9),
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent
+            ),
+            singleLine = true
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.background(Color.White)
+        ) {
+            options.forEach { selectionOption ->
+                DropdownMenuItem(
+                    text = { Text(selectionOption, color = Color.Black) },
+                    onClick = {
+                        onValueChange(selectionOption)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
 }
