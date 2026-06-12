@@ -28,8 +28,13 @@ fun BrowseScreen(
         colors = listOf(Color(0xFF3F1A9C), Color(0xFFC62828))
     )
 
-    // State untuk mengingat filter mana yang sedang aktif/diklik
+    // State untuk mengingat filter tab yang aktif
     var selectedFilter by remember { mutableStateOf("Semua Status") }
+
+    // State khusus untuk Dropdown Kategori
+    var kategoriExpanded by remember { mutableStateOf(false) }
+    var selectedKategori by remember { mutableStateOf("Semua Kategori") }
+    val daftarKategori = listOf("Semua Kategori", "Elektronik", "Furnitur", "ATK", "Pakaian", "Makanan & Minuman", "Peralatan")
 
     Column(
         modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA))
@@ -52,7 +57,6 @@ fun BrowseScreen(
                         Text("12 dari 12 produk", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
                     }
 
-                    // Tombol Tambah Produk Bergaya Floating Mini
                     Button(
                         onClick = onAddClick,
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.2f)),
@@ -66,7 +70,6 @@ fun BrowseScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Kolom Cari Nama atau SKU
                 OutlinedTextField(
                     value = "",
                     onValueChange = {},
@@ -85,7 +88,7 @@ fun BrowseScreen(
             }
         }
 
-        // --- 2. HORIZONTAL FILTER BADGES (BISA DI-CLICK & DI-SCROLL) ---
+        // --- 2. HORIZONTAL FILTER BADGES (DENGAN DROPDOWN KATEGORI) ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -93,12 +96,63 @@ fun BrowseScreen(
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            FilterChip(
-                selected = selectedFilter == "Kategori",
-                onClick = { selectedFilter = "Kategori" },
-                label = { Text("Kategori ▾") }
-            )
+            // BOX PEMBUNGKUS DROPDOWN
+            Box {
+                FilterChip(
+                    selected = selectedKategori != "Semua Kategori",
+                    onClick = { kategoriExpanded = true }, // Munculkan menu saat diklik
+                    label = {
+                        // Teks berubah sesuai pilihan
+                        Text(if (selectedKategori == "Semua Kategori") "Kategori ▾" else "$selectedKategori ▾")
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Color(0xFFE3F2FD),
+                        selectedLabelColor = Color(0xFF0D47A1)
+                    )
+                )
 
+                // ISI MENU DROPDOWN
+                DropdownMenu(
+                    expanded = kategoriExpanded,
+                    onDismissRequest = { kategoriExpanded = false },
+                    modifier = Modifier
+                        .background(Color.White)
+                        .width(240.dp) // Lebar menu disesuaikan
+                ) {
+                    daftarKategori.forEach { kategori ->
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = kategori,
+                                        color = Color.Black,
+                                        fontWeight = if (selectedKategori == kategori) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                    // Munculkan centang biru jika kategori ini sedang dipilih
+                                    if (selectedKategori == kategori) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Terpilih",
+                                            tint = Color(0xFF0D47A1),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            },
+                            onClick = {
+                                selectedKategori = kategori // Ubah state pilihan
+                                kategoriExpanded = false    // Tutup menu
+                            }
+                        )
+                    }
+                }
+            }
+
+            // Filter Status Lainnya
             FilterChip(
                 selected = selectedFilter == "Semua Status",
                 onClick = { selectedFilter = "Semua Status" },
@@ -130,11 +184,11 @@ fun BrowseScreen(
             )
         }
 
-        // --- 3. LIST OF ITEMS (PADDINGS BERSIH & SCROLLABLE) ---
+        // --- 3. LIST OF ITEMS (OTOMATIS BERADA DI BAWAH DROPDOWN) ---
         LazyColumn(
             modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp) // Jarak bawah 100.dp aman dari navbar
+            contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp)
         ) {
             item { ProductItemCard(name = "Laptop Asus VivoBook 15", code = "ELC-001 · PT Asus Indonesia", category = "Elektronik", stock = "12 / min 5", price = "Rp 7.500.000", status = "Tersedia", isAvailable = true) }
             item { ProductItemCard(name = "Mouse Wireless Logitech", code = "ELC-002 · PT Logitech Indo", category = "Elektronik", stock = "45 / min 10", price = "Rp 175.000", status = "Tersedia", isAvailable = true) }
@@ -154,7 +208,6 @@ fun ProductItemCard(name: String, code: String, category: String, stock: String,
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Kotak Foto / Placeholder Gambar Produk
                     Box(
                         modifier = Modifier.size(54.dp).background(Color(0xFFEEEEEE), RoundedCornerShape(12.dp)),
                         contentAlignment = Alignment.Center
@@ -168,7 +221,6 @@ fun ProductItemCard(name: String, code: String, category: String, stock: String,
                     }
                 }
 
-                // Status Badge
                 Card(
                     colors = CardDefaults.cardColors(containerColor = if (isAvailable) Color(0xFFE8F5E9) else Color(0xFFFFF3E0)),
                     shape = RoundedCornerShape(8.dp)
@@ -179,7 +231,6 @@ fun ProductItemCard(name: String, code: String, category: String, stock: String,
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Baris Informasi Kategori dan Stok
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE8EAF6)), shape = RoundedCornerShape(6.dp)) {
                     Text(category, color = Color(0xFF3F1A9C), fontSize = 11.sp, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
@@ -190,7 +241,6 @@ fun ProductItemCard(name: String, code: String, category: String, stock: String,
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFFEEEEEE))
 
-            // Baris Harga dan Tombol Aksi Cepat Bawah
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(price, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0D47A1))
 
