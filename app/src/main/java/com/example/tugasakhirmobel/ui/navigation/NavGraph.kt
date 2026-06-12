@@ -17,11 +17,13 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.tugasakhirmobel.ui.screens.auth.AuthViewModel
 import com.example.tugasakhirmobel.ui.screens.auth.LoginScreen
 import com.example.tugasakhirmobel.ui.screens.dashboard.DashboardScreen
-import com.example.tugasakhirmobel.ui.screens.product.ProductFormScreen
+import com.example.tugasakhirmobel.ui.screens.barang.BarangViewModel
+import com.example.tugasakhirmobel.ui.screens.barang.FormBarangScreen
 import com.example.tugasakhirmobel.ui.screens.browse.BrowseScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 
 // 1. Data Class untuk menyimpan informasi menu Navbar
 data class BottomNavItem(
@@ -128,7 +130,11 @@ fun SetupNavGraph(
 
             // --- RUTE LAYAR TAMBAH PRODUK ---
             composable(route = ScreenRoutes.ProductForm.route) {
-                ProductFormScreen(onCloseClick = { navController.popBackStack() })
+                // Panggil nama screen baru dan ikut sertakan barangViewModel-nya
+                FormBarangScreen(
+                    viewModel = hiltViewModel(), // Pastikan Anda menggunakan hiltViewModel() agar Hilt otomatis menyuntikkan VM-nya
+                    onCloseClick = { navController.popBackStack() }
+                )
             }
 
             // --- RUTE LAYAR BROWSE (DAFTAR BARANG) ---

@@ -1,14 +1,16 @@
 package com.example.tugasakhirmobel.ui.screens.browse
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -25,6 +27,9 @@ fun BrowseScreen(
     val gradientBackground = Brush.verticalGradient(
         colors = listOf(Color(0xFF3F1A9C), Color(0xFFC62828))
     )
+
+    // State untuk mengingat filter mana yang sedang aktif/diklik
+    var selectedFilter by remember { mutableStateOf("Semua Status") }
 
     Column(
         modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA))
@@ -80,24 +85,56 @@ fun BrowseScreen(
             }
         }
 
-        // --- 2. HORIZONTAL FILTER BADGES ---
+        // --- 2. HORIZONTAL FILTER BADGES (BISA DI-CLICK & DI-SCROLL) ---
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            SuggestionChip(onClick = {}, label = { Text("Kategori ▾") })
-            Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFC62828)), shape = RoundedCornerShape(20.dp)) {
-                Text("Semua Status", color = Color.White, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), fontWeight = FontWeight.Bold)
-            }
-            SuggestionChip(onClick = {}, label = { Text("Tersedia") })
-            SuggestionChip(onClick = {}, label = { Text("Stok Rendah") })
+            FilterChip(
+                selected = selectedFilter == "Kategori",
+                onClick = { selectedFilter = "Kategori" },
+                label = { Text("Kategori ▾") }
+            )
+
+            FilterChip(
+                selected = selectedFilter == "Semua Status",
+                onClick = { selectedFilter = "Semua Status" },
+                label = { Text("Semua Status") },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = Color(0xFFC62828),
+                    selectedLabelColor = Color.White
+                )
+            )
+
+            FilterChip(
+                selected = selectedFilter == "Tersedia",
+                onClick = { selectedFilter = "Tersedia" },
+                label = { Text("Tersedia") },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = Color(0xFF2E7D32),
+                    selectedLabelColor = Color.White
+                )
+            )
+
+            FilterChip(
+                selected = selectedFilter == "Stok Rendah",
+                onClick = { selectedFilter = "Stok Rendah" },
+                label = { Text("Stok Rendah") },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = Color(0xFFFFB300),
+                    selectedLabelColor = Color.White
+                )
+            )
         }
 
-        // --- 3. LIST OF ITEMS ---
+        // --- 3. LIST OF ITEMS (PADDINGS BERSIH & SCROLLABLE) ---
         LazyColumn(
             modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 16.dp)
+            contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp) // Jarak bawah 100.dp aman dari navbar
         ) {
             item { ProductItemCard(name = "Laptop Asus VivoBook 15", code = "ELC-001 · PT Asus Indonesia", category = "Elektronik", stock = "12 / min 5", price = "Rp 7.500.000", status = "Tersedia", isAvailable = true) }
             item { ProductItemCard(name = "Mouse Wireless Logitech", code = "ELC-002 · PT Logitech Indo", category = "Elektronik", stock = "45 / min 10", price = "Rp 175.000", status = "Tersedia", isAvailable = true) }
@@ -151,7 +188,7 @@ fun ProductItemCard(name: String, code: String, category: String, stock: String,
                 Text(stock, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
 
-            Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFFEEEEEE))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFFEEEEEE))
 
             // Baris Harga dan Tombol Aksi Cepat Bawah
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
