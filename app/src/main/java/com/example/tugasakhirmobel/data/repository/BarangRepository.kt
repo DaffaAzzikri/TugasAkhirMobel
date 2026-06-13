@@ -23,10 +23,20 @@ class BarangRepository @Inject constructor() {
         harga: MultipartBody.Part,
         supplier: MultipartBody.Part,
         stok: MultipartBody.Part,
+        stokMinimum: MultipartBody.Part,
         fileGambar: MultipartBody.Part
     ): Result<String> {
         return try {
-            val response = apiService.createBarang(nama, sku, kategori, harga, supplier, stok, fileGambar)
+            val response = apiService.createBarang(
+                nama,
+                sku,
+                kategori,
+                harga,
+                supplier,
+                stok,
+                stokMinimum,
+                fileGambar
+            )
             if (response.isSuccessful) Result.success("Sukses")
             else Result.failure(Exception("Gagal: ${response.code()}"))
         } catch (e: Exception) {

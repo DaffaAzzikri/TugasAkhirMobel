@@ -45,6 +45,7 @@ fun FormBarangScreen(
     // Initialize fields with existing data if editing
     var productName by remember { mutableStateOf(item?.namaBarang ?: "") }
     var currentStock by remember { mutableStateOf(item?.stok?.toString() ?: "") }
+    var minStock by remember { mutableStateOf(item?.stokMinimum?.toString() ?: "") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
 
     var sku by remember { mutableStateOf(item?.sku ?: "") }
@@ -206,6 +207,7 @@ fun FormBarangScreen(
                                     harga = price,
                                     supplier = supplier,
                                     stok = currentStock,
+                                    stokMinimum = minStock,
                                     imageUrl = item?.imageUrl ?: ""
                                 )
                             } else {
@@ -216,6 +218,7 @@ fun FormBarangScreen(
                                     harga = price,
                                     supplier = supplier,
                                     stokTeks = currentStock,
+                                    stokMinimum = minStock,
                                     imageUri = imageUri
                                 )
                             }

@@ -222,14 +222,19 @@ fun BrowseScreen(
             contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp)
         ) {
             items(barangList) { barang ->
+                val statusText = when {
+                    barang.stok <= 0 -> "Habis"
+                    barang.stok <= barang.stokMinimum -> "Stok Rendah"
+                    else -> "Tersedia"
+                }
                 ProductItemCard(
                     name = barang.namaBarang,
                     code = "${barang.sku} · ${barang.supplier}",
                     category = barang.kategori,
                     stock = "${barang.stok}",
                     price = "Rp ${barang.harga}",
-                    status = if (barang.stok > 0) "Tersedia" else "Habis",
-                    isAvailable = barang.stok > 0,
+                    status = statusText,
+                    isAvailable = barang.stok > barang.stokMinimum,
                     imageUrl = barang.imageUrl,
                     onEdit = { onEditClick(barang) },
                     onDelete = {
@@ -258,6 +263,14 @@ fun ProductItemCard(
     // 1. Siapkan Painter dari ImageVector satu kali saja
     val placeholderPainter = rememberVectorPainter(Icons.Default.Image)
     val errorPainter = rememberVectorPainter(Icons.Default.Inventory)
+
+    // Tentukan warna berdasarkan status string untuk mendukung 3 kondisi
+    val badgeColors = when (status) {
+        "Tersedia" -> Pair(Color(0xFFE8F5E9), Color(0xFF2E7D32)) // Hijau
+        "Stok Rendah" -> Pair(Color(0xFFFFF3E0), Color(0xFFE65100)) // Orange/Kuning
+        "Habis" -> Pair(Color(0xFFFFEBEE), Color(0xFFD32F2F)) // Merah
+        else -> Pair(Color(0xFFF5F5F5), Color.Gray)
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -307,13 +320,13 @@ fun ProductItemCard(
                 // Status Badge
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isAvailable) Color(0xFFE8F5E9) else Color(0xFFFFF3E0)
+                        containerColor = badgeColors.first
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
                         status,
-                        color = if (isAvailable) Color(0xFF2E7D32) else Color(0xFFE65100),
+                        color = badgeColors.second,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
