@@ -52,7 +52,6 @@ fun FormBarangScreen(
     var price by remember { mutableStateOf(item?.harga?.toString() ?: "") }
     var supplier by remember { mutableStateOf(item?.supplier ?: "") }
     var category by remember { mutableStateOf(item?.kategori ?: "") }
-    var minStock by remember { mutableStateOf("") }
 
     val daftarKategoriForm = listOf("Elektronik", "Furnitur", "ATK", "Pakaian", "Makanan & Minuman", "Peralatan")
 
