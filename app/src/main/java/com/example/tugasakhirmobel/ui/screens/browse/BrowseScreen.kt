@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,17 +14,29 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.tugasakhirmobel.ui.screens.barang.BarangViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrowseScreen(
-    onAddClick: () -> Unit
+    onAddClick: () -> Unit,
+    viewModel: BarangViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
+    val barangList by viewModel.barangList.collectAsState()
+
+    // Refresh data setiap kali layar dibuka
+    LaunchedEffect(Unit) {
+        viewModel.loadBarang()
+    }
+    
     val gradientBackground = Brush.verticalGradient(
         colors = listOf(Color(0xFF3F1A9C), Color(0xFFC62828))
     )
@@ -54,7 +67,7 @@ fun BrowseScreen(
                 ) {
                     Column {
                         Text("Daftar Barang", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                        Text("12 dari 12 produk", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                        Text("${barangList.size} produk", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
                     }
 
                     Button(
@@ -96,13 +109,11 @@ fun BrowseScreen(
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // BOX PEMBUNGKUS DROPDOWN
             Box {
                 FilterChip(
                     selected = selectedKategori != "Semua Kategori",
-                    onClick = { kategoriExpanded = true }, // Munculkan menu saat diklik
+                    onClick = { kategoriExpanded = true },
                     label = {
-                        // Teks berubah sesuai pilihan
                         Text(if (selectedKategori == "Semua Kategori") "Kategori ▾" else "$selectedKategori ▾")
                     },
                     colors = FilterChipDefaults.filterChipColors(
@@ -111,13 +122,12 @@ fun BrowseScreen(
                     )
                 )
 
-                // ISI MENU DROPDOWN
                 DropdownMenu(
                     expanded = kategoriExpanded,
                     onDismissRequest = { kategoriExpanded = false },
                     modifier = Modifier
                         .background(Color.White)
-                        .width(240.dp) // Lebar menu disesuaikan
+                        .width(240.dp)
                 ) {
                     daftarKategori.forEach { kategori ->
                         DropdownMenuItem(
@@ -132,7 +142,6 @@ fun BrowseScreen(
                                         color = Color.Black,
                                         fontWeight = if (selectedKategori == kategori) FontWeight.Bold else FontWeight.Normal
                                     )
-                                    // Munculkan centang biru jika kategori ini sedang dipilih
                                     if (selectedKategori == kategori) {
                                         Icon(
                                             imageVector = Icons.Default.Check,
@@ -144,15 +153,14 @@ fun BrowseScreen(
                                 }
                             },
                             onClick = {
-                                selectedKategori = kategori // Ubah state pilihan
-                                kategoriExpanded = false    // Tutup menu
+                                selectedKategori = kategori
+                                kategoriExpanded = false
                             }
                         )
                     }
                 }
             }
 
-            // Filter Status Lainnya
             FilterChip(
                 selected = selectedFilter == "Semua Status",
                 onClick = { selectedFilter = "Semua Status" },
@@ -184,21 +192,43 @@ fun BrowseScreen(
             )
         }
 
-        // --- 3. LIST OF ITEMS (OTOMATIS BERADA DI BAWAH DROPDOWN) ---
+        // --- 3. LIST OF ITEMS ---
         LazyColumn(
             modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp)
         ) {
-            item { ProductItemCard(name = "Laptop Asus VivoBook 15", code = "ELC-001 · PT Asus Indonesia", category = "Elektronik", stock = "12 / min 5", price = "Rp 7.500.000", status = "Tersedia", isAvailable = true) }
-            item { ProductItemCard(name = "Mouse Wireless Logitech", code = "ELC-002 · PT Logitech Indo", category = "Elektronik", stock = "45 / min 10", price = "Rp 175.000", status = "Tersedia", isAvailable = true) }
-            item { ProductItemCard(name = "Keyboard Mechanical Redragon", code = "ELC-003 · Redragon Store", category = "Elektronik", stock = "3 / min 5", price = "Rp 650.000", status = "Stok Rendah", isAvailable = false) }
+            items(barangList) { barang ->
+                ProductItemCard(
+                    name = barang.namaBarang,
+                    code = "${barang.sku} · ${barang.supplier}",
+                    category = barang.kategori,
+                    stock = "${barang.stok}",
+                    price = "Rp ${barang.harga}",
+                    status = if (barang.stok > 0) "Tersedia" else "Habis",
+                    isAvailable = barang.stok > 0,
+                    imageUrl = barang.imageUrl
+                )
+            }
         }
     }
 }
 
 @Composable
-fun ProductItemCard(name: String, code: String, category: String, stock: String, price: String, status: String, isAvailable: Boolean) {
+fun ProductItemCard(
+    name: String,
+    code: String,
+    category: String,
+    stock: String,
+    price: String,
+    status: String,
+    isAvailable: Boolean,
+    imageUrl: String
+) {
+    // 1. Siapkan Painter dari ImageVector satu kali saja
+    val placeholderPainter = rememberVectorPainter(Icons.Default.Image)
+    val errorPainter = rememberVectorPainter(Icons.Default.Inventory)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -206,34 +236,75 @@ fun ProductItemCard(name: String, code: String, category: String, stock: String,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    // --- BAGIAN GAMBAR ---
                     Box(
-                        modifier = Modifier.size(54.dp).background(Color(0xFFEEEEEE), RoundedCornerShape(12.dp)),
+                        modifier = Modifier
+                            .size(54.dp)
+                            .background(Color(0xFFEEEEEE), RoundedCornerShape(12.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(imageVector = Icons.Default.Inventory, contentDescription = null, tint = Color.Gray)
+                        coil.compose.AsyncImage(
+                            // 2. Gunakan ImageRequest untuk kontrol lebih detail
+                            model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                                .data(imageUrl.ifBlank { null }) // Berikan null jika string kosong
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = "Foto $name",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(12.dp)),
+                            contentScale = ContentScale.Crop,
+                            // 3. Masukkan Painter ke parameter yang tepat
+                            placeholder = placeholderPainter,
+                            error = errorPainter
+                        )
                     }
+
                     Spacer(modifier = Modifier.width(12.dp))
+
                     Column {
                         Text(name, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFF1A1A1A))
                         Text(code, fontSize = 11.sp, color = Color.Gray)
                     }
                 }
 
+                // Status Badge
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = if (isAvailable) Color(0xFFE8F5E9) else Color(0xFFFFF3E0)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isAvailable) Color(0xFFE8F5E9) else Color(0xFFFFF3E0)
+                    ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text(status, color = if (isAvailable) Color(0xFF2E7D32) else Color(0xFFE65100), fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                    Text(
+                        status,
+                        color = if (isAvailable) Color(0xFF2E7D32) else Color(0xFFE65100),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Detail Kategori & Stok
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE8EAF6)), shape = RoundedCornerShape(6.dp)) {
-                    Text(category, color = Color(0xFF3F1A9C), fontSize = 11.sp, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE8EAF6)),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        category,
+                        color = Color(0xFF3F1A9C),
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
                 }
                 Text("Stok: ", color = Color.Gray, fontSize = 12.sp)
                 Text(stock, fontWeight = FontWeight.Bold, fontSize = 12.sp)
@@ -241,15 +312,22 @@ fun ProductItemCard(name: String, code: String, category: String, stock: String,
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFFEEEEEE))
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            // Harga & Tombol Aksi
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(price, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0D47A1))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     val btnModifier = Modifier.size(32.dp).background(Color(0xFFF5F7FA), CircleShape)
-                    IconButton(onClick = {}, modifier = btnModifier) { Icon(Icons.Default.ArrowOutward, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                    IconButton(onClick = {}, modifier = btnModifier) { Icon(Icons.Default.ArrowDownward, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                    IconButton(onClick = {}, modifier = btnModifier) { Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                    IconButton(onClick = {}, modifier = btnModifier) { Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Red) }
+                    IconButton(onClick = {}, modifier = btnModifier) {
+                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                    }
+                    IconButton(onClick = {}, modifier = btnModifier) {
+                        Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Red)
+                    }
                 }
             }
         }
