@@ -57,7 +57,7 @@ class BarangViewModel @Inject constructor(
 
     fun tambahBarangBaru(
         nama: String, sku: String, kategori: String, harga: String,
-        supplier: String, stokTeks: String, imageUri: Uri?
+        supplier: String, stokTeks: String, stokMinimum: String, imageUri: Uri?
     ) {
         if (nama.isBlank() || sku.isBlank() || kategori.isBlank() || stokTeks.isBlank() || imageUri == null) {
             _barangState.value = BarangState.Error("Kolom bertanda * wajib diisi!")
@@ -76,9 +76,10 @@ class BarangViewModel @Inject constructor(
                 val bodyHarga = MultipartBody.Part.createFormData("harga", if(harga.isBlank()) "0" else harga)
                 val bodySupplier = MultipartBody.Part.createFormData("supplier", supplier)
                 val bodyStok = MultipartBody.Part.createFormData("stok", stokTeks)
+                val bodyStokMin = MultipartBody.Part.createFormData("stok_minimum", if(stokMinimum.isBlank()) "0" else stokMinimum)
                 val bodyGambar = MultipartBody.Part.createFormData("file_gambar", file.name, requestFile)
 
-                val hasil = repository.tambahBarang(bodyNama, bodySku, bodyKategori, bodyHarga, bodySupplier, bodyStok, bodyGambar)
+                val hasil = repository.tambahBarang(bodyNama, bodySku, bodyKategori, bodyHarga, bodySupplier, bodyStok, bodyStokMin, bodyGambar)
 
                 hasil.fold(
                     onSuccess = {
@@ -95,7 +96,7 @@ class BarangViewModel @Inject constructor(
 
     fun updateBarang(
         id: Int, nama: String, sku: String, kategori: String, harga: String,
-        supplier: String, stok: String, imageUrl: String
+        supplier: String, stok: String, stokMinimum: String, imageUrl: String
     ) {
         _barangState.value = BarangState.Loading
         viewModelScope.launch {
@@ -107,6 +108,7 @@ class BarangViewModel @Inject constructor(
                     harga = harga.toIntOrNull() ?: 0,
                     supplier = supplier,
                     stok = stok.toIntOrNull() ?: 0,
+                    stokMinimum = stokMinimum.toIntOrNull() ?: 0,
                     imageUrl = imageUrl
                 )
                 val response = repository.updateBarang(id, request)

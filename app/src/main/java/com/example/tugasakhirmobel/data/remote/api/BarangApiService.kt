@@ -20,6 +20,7 @@ interface BarangApiService {
         @Part harga: MultipartBody.Part,
         @Part supplier: MultipartBody.Part,
         @Part stok: MultipartBody.Part,
+        @Part stok_minimum: MultipartBody.Part,
         @Part file_gambar: MultipartBody.Part
     ): Response<Map<String, Any>>
 

@@ -2,7 +2,10 @@ package com.example.tugasakhirmobel.data.remote.model
 
 import com.google.gson.annotations.SerializedName
 
-data class BarangRequest(
+data class BarangModel(
+    @SerializedName("id")
+    val id: Int,
+
     @SerializedName("nama_barang")
     val namaBarang: String,
 
