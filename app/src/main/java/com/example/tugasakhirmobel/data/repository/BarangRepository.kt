@@ -3,6 +3,7 @@ package com.example.tugasakhirmobel.data.repository
 import com.example.tugasakhirmobel.data.remote.api.BarangApiService
 import com.example.tugasakhirmobel.data.remote.RetrofitClient
 import com.example.tugasakhirmobel.data.remote.model.BarangListResponse
+import com.example.tugasakhirmobel.data.remote.model.BarangRequest
 import okhttp3.MultipartBody
 import retrofit2.Response
 import javax.inject.Inject
@@ -32,6 +33,9 @@ class BarangRepository @Inject constructor() {
             Result.failure(e)
         }
     }
+
+    suspend fun updateBarang(id: Int, request: BarangRequest): Response<Map<String, Any>> =
+        apiService.updateBarang(id, request)
 
     suspend fun hapusBarang(id: Int): Response<Map<String, Any>> = apiService.deleteBarang(id)
 }

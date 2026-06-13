@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.tugasakhirmobel.data.remote.model.BarangModel
+import com.example.tugasakhirmobel.ui.screens.barang.BarangViewModel
 
 // 1. Data Class untuk menyimpan informasi menu Navbar
 data class BottomNavItem(
@@ -40,6 +42,9 @@ fun SetupNavGraph(
     navController: NavHostController,
     authViewModel: AuthViewModel
 ) {
+    // Shared ViewModel for Barang CRUD operations
+    val barangViewModel: BarangViewModel = hiltViewModel()
+
     // Memantau posisi halaman saat ini untuk menentukan warna ikon aktif
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -130,18 +135,27 @@ fun SetupNavGraph(
                 )
             }
 
-            // --- RUTE LAYAR TAMBAH PRODUK ---
+            // --- RUTE LAYAR TAMBAH/EDIT PRODUK ---
             composable(route = ScreenRoutes.ProductForm.route) {
-                // Panggil nama screen baru dan ikut sertakan barangViewModel-nya
                 FormBarangScreen(
-                    viewModel = hiltViewModel(), // Pastikan Anda menggunakan hiltViewModel() agar Hilt otomatis menyuntikkan VM-nya
+                    viewModel = barangViewModel,
                     onCloseClick = { navController.popBackStack() }
                 )
             }
 
             // --- RUTE LAYAR BROWSE (DAFTAR BARANG) ---
             composable(route = ScreenRoutes.Browse.route) {
-                BrowseScreen(onAddClick = { navController.navigate(ScreenRoutes.ProductForm.route) })
+                BrowseScreen(
+                    onAddClick = { 
+                        barangViewModel.resetState()
+                        navController.navigate(ScreenRoutes.ProductForm.route) 
+                    },
+                    onEditClick = { barang ->
+                        barangViewModel.itemToEdit = barang
+                        navController.navigate(ScreenRoutes.ProductForm.route)
+                    },
+                    viewModel = barangViewModel
+                )
             }
             composable(route = ScreenRoutes.Riwayat.route) {
                 RiwayatScreen()
