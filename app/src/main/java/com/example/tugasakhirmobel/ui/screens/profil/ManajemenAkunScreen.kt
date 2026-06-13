@@ -33,7 +33,7 @@ fun ManajemenAkunScreen(onBackClick: () -> Unit) {
     // State untuk mengontrol muncul/hilangnya pop-up form tambah pengguna
     var showTambahDialog by remember { mutableStateOf(false) }
 
-    val gradientHeader = Brush.horizontalGradient(listOf(Color(0xFF6A1B9A), Color(0xFFC62828)))
+    val gradientHeader = Brush.verticalGradient(listOf(Color(0xFF6A1B9A), Color(0xFFC62828)))
 
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA))) {
         // --- 1. HEADER (SUDAH DIRAPIKAN PADDING & ALIGNMENT-NYA) ---

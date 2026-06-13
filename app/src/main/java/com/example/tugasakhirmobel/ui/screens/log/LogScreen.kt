@@ -30,8 +30,8 @@ fun LogScreen() {
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("Semua") }
 
-    val gradientHeader = Brush.horizontalGradient(
-        colors = listOf(Color(0xFFC62828), Color(0xFF6A1B9A)) // Biru ke Merah
+    val gradientHeader = Brush.verticalGradient(
+        colors = listOf(Color(0xFF6A1B9A), Color(0xFFC62828)) // Biru ke Merah
     )
 
     Column(

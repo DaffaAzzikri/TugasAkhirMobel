@@ -31,8 +31,8 @@ fun RiwayatScreen() {
     var selectedFilter by remember { mutableStateOf("Semua") }
 
     // Warna Tema Aplikasi
-    val gradientBackground = Brush.horizontalGradient(
-        colors = listOf(Color(0xFF1565C0), Color(0xFFC62828)) // Biru ke Merah sesuai gambar
+    val gradientBackground = Brush.verticalGradient(
+        colors = listOf(Color(0xFF6A1B9A), Color(0xFFE91E63)) // Biru ke Merah sesuai gambar
     )
     val colorMasuk = Color(0xFF0D47A1) // Biru
     val colorKeluar = Color(0xFFD32F2F) // Merah

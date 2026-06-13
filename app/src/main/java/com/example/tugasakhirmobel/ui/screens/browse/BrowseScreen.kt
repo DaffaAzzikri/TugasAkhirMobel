@@ -60,7 +60,7 @@ fun BrowseScreen(
     }
 
     val gradientBackground = Brush.verticalGradient(
-        colors = listOf(Color(0xFF3F1A9C), Color(0xFFC62828))
+        colors = listOf(Color(0xFF3F1A9C), Color(0xFFE91E63))
     )
 
     // State untuk mengingat filter tab yang aktif
