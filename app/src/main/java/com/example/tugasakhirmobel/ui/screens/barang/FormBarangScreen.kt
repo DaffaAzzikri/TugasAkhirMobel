@@ -181,8 +181,17 @@ fun FormBarangScreen(
                         Text("Batal", color = Color.Black, fontWeight = FontWeight.Bold)
                     }
 
-                    Button(
-                        onClick = { viewModel.tambahBarangBaru(productName, currentStock, imageUri) },
+                    Button(    onClick = {
+                        viewModel.tambahBarangBaru(
+                            nama = productName,
+                            sku = sku,
+                            kategori = category,
+                            harga = price,
+                            supplier = supplier,
+                            stokTeks = currentStock,
+                            imageUri = imageUri
+                        )
+                    },
                         enabled = state !is BarangState.Loading,
                         modifier = Modifier.weight(1f).height(50.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F1A9C)),

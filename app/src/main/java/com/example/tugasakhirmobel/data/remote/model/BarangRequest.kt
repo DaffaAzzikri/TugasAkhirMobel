@@ -6,6 +6,18 @@ data class BarangRequest(
     @SerializedName("nama_barang")
     val namaBarang: String,
 
+    @SerializedName("sku")
+    val sku: String,
+
+    @SerializedName("kategori")
+    val kategori: String,
+
+    @SerializedName("harga")
+    val harga: Int,
+
+    @SerializedName("supplier")
+    val supplier: String,
+
     @SerializedName("stok")
     val stok: Int,
 
