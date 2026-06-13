@@ -70,6 +70,7 @@ fun BrowseScreen(
     var kategoriExpanded by remember { mutableStateOf(false) }
     var selectedKategori by remember { mutableStateOf("Semua Kategori") }
     val daftarKategori = listOf("Semua Kategori", "Elektronik", "Furnitur", "ATK", "Pakaian", "Makanan & Minuman", "Peralatan")
+    var searchQuery by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA))
@@ -106,8 +107,8 @@ fun BrowseScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
                     placeholder = { Text("Cari nama atau SKU...", color = Color.White.copy(alpha = 0.6f)) },
                     leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = "Cari", tint = Color.White.copy(alpha = 0.7f)) },
                     modifier = Modifier.fillMaxWidth(),
