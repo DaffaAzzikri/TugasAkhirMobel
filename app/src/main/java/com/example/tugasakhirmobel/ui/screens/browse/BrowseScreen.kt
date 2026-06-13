@@ -22,21 +22,43 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.tugasakhirmobel.data.remote.model.BarangModel
 import com.example.tugasakhirmobel.ui.screens.barang.BarangViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrowseScreen(
     onAddClick: () -> Unit,
-    viewModel: BarangViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    onEditClick: (BarangModel) -> Unit,
+    viewModel: BarangViewModel
 ) {
     val barangList by viewModel.barangList.collectAsState()
 
-    // Refresh data setiap kali layar dibuka
+    // State untuk Dialog Delete
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var itemToDelete by remember { mutableStateOf<BarangModel?>(null) }
+
     LaunchedEffect(Unit) {
         viewModel.loadBarang()
     }
-    
+
+    if (showDeleteDialog && itemToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Hapus Barang?", fontWeight = FontWeight.Bold) },
+            text = { Text("Apakah Anda yakin ingin menghapus '${itemToDelete?.namaBarang}'? Tindakan ini tidak dapat dibatalkan.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    itemToDelete?.id?.let { viewModel.hapusBarang(it) }
+                    showDeleteDialog = false
+                }) { Text("Hapus", color = Color.Red, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Batal") }
+            }
+        )
+    }
+
     val gradientBackground = Brush.verticalGradient(
         colors = listOf(Color(0xFF3F1A9C), Color(0xFFC62828))
     )
@@ -207,7 +229,12 @@ fun BrowseScreen(
                     price = "Rp ${barang.harga}",
                     status = if (barang.stok > 0) "Tersedia" else "Habis",
                     isAvailable = barang.stok > 0,
-                    imageUrl = barang.imageUrl
+                    imageUrl = barang.imageUrl,
+                    onEdit = { onEditClick(barang) },
+                    onDelete = {
+                        itemToDelete = barang
+                        showDeleteDialog = true
+                    }
                 )
             }
         }
@@ -223,7 +250,9 @@ fun ProductItemCard(
     price: String,
     status: String,
     isAvailable: Boolean,
-    imageUrl: String
+    imageUrl: String,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
 ) {
     // 1. Siapkan Painter dari ImageVector satu kali saja
     val placeholderPainter = rememberVectorPainter(Icons.Default.Image)
@@ -322,11 +351,11 @@ fun ProductItemCard(
 
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     val btnModifier = Modifier.size(32.dp).background(Color(0xFFF5F7FA), CircleShape)
-                    IconButton(onClick = {}, modifier = btnModifier) {
-                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                    IconButton(onClick = onEdit, modifier = btnModifier) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.size(16.dp))
                     }
-                    IconButton(onClick = {}, modifier = btnModifier) {
-                        Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Red)
+                    IconButton(onClick = onDelete, modifier = btnModifier) {
+                        Icon(Icons.Default.Delete, contentDescription = "Hapus", modifier = Modifier.size(16.dp), tint = Color.Red)
                     }
                 }
             }
