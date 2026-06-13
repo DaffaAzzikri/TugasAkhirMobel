@@ -125,9 +125,8 @@ fun SetupNavGraph(
                             popUpTo(0) // Membersihkan semua riwayat saat logout
                         }
                     },
-                    onPingClick = { authViewModel.testKoneksiKeFastAPI() },
-                    onAddProductClick = { navController.navigate(ScreenRoutes.ProductForm.route) },
-                    onBrowseClick = { navController.navigate(ScreenRoutes.Browse.route) }
+                    onBrowseClick = { navController.navigate(ScreenRoutes.Browse.route) },
+                    onRiwayatClick = { navController.navigate(ScreenRoutes.Riwayat.route) } // Navigasi ke Riwayat sudah dipasang
                 )
             }
 
