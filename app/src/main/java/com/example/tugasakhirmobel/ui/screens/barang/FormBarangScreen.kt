@@ -38,16 +38,20 @@ fun FormBarangScreen(
     val context = LocalContext.current
     val state by viewModel.barangState.collectAsState()
 
-    var productName by remember { mutableStateOf("") }
-    var currentStock by remember { mutableStateOf("") }
+    // Detect edit mode using itemToEdit
+    val item = viewModel.itemToEdit
+    val isEditMode = item != null
+
+    // Initialize fields with existing data if editing
+    var productName by remember { mutableStateOf(item?.namaBarang ?: "") }
+    var currentStock by remember { mutableStateOf(item?.stok?.toString() ?: "") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
 
-    var sku by remember { mutableStateOf("") }
-    var price by remember { mutableStateOf("") }
-    var supplier by remember { mutableStateOf("") }
+    var sku by remember { mutableStateOf(item?.sku ?: "") }
+    var price by remember { mutableStateOf(item?.harga?.toString() ?: "") }
+    var supplier by remember { mutableStateOf(item?.supplier ?: "") }
+    var category by remember { mutableStateOf(item?.kategori ?: "") }
 
-    // State khusus untuk Dropdown Kategori
-    var category by remember { mutableStateOf("") }
     val daftarKategoriForm = listOf("Elektronik", "Furnitur", "ATK", "Pakaian", "Makanan & Minuman", "Peralatan")
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -58,7 +62,8 @@ fun FormBarangScreen(
     LaunchedEffect(state) {
         when (state) {
             is BarangState.Success -> {
-                Toast.makeText(context, "Barang berhasil disimpan!", Toast.LENGTH_SHORT).show()
+                val message = if (isEditMode) "Barang berhasil diperbarui!" else "Barang berhasil disimpan!"
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                 viewModel.resetState()
                 onCloseClick()
             }
@@ -73,7 +78,7 @@ fun FormBarangScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Tambah Produk", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = { Text(if (isEditMode) "Edit Produk" else "Tambah Produk", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 actions = {
                     IconButton(
                         onClick = onCloseClick,
@@ -113,6 +118,13 @@ fun FormBarangScreen(
                         Image(
                             painter = rememberAsyncImagePainter(imageUri),
                             contentDescription = "Preview Gambar",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else if (isEditMode && item?.imageUrl?.isNotEmpty() == true) {
+                        Image(
+                            painter = rememberAsyncImagePainter(item.imageUrl),
+                            contentDescription = "Existing Gambar",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
@@ -181,23 +193,37 @@ fun FormBarangScreen(
                         Text("Batal", color = Color.Black, fontWeight = FontWeight.Bold)
                     }
 
-                    Button(    onClick = {
-                        viewModel.tambahBarangBaru(
-                            nama = productName,
-                            sku = sku,
-                            kategori = category,
-                            harga = price,
-                            supplier = supplier,
-                            stokTeks = currentStock,
-                            imageUri = imageUri
-                        )
-                    },
+                    Button(
+                        onClick = {
+                            if (isEditMode) {
+                                viewModel.updateBarang(
+                                    id = item?.id ?: 0,
+                                    nama = productName,
+                                    sku = sku,
+                                    kategori = category,
+                                    harga = price,
+                                    supplier = supplier,
+                                    stok = currentStock,
+                                    imageUrl = item?.imageUrl ?: ""
+                                )
+                            } else {
+                                viewModel.tambahBarangBaru(
+                                    nama = productName,
+                                    sku = sku,
+                                    kategori = category,
+                                    harga = price,
+                                    supplier = supplier,
+                                    stokTeks = currentStock,
+                                    imageUri = imageUri
+                                )
+                            }
+                        },
                         enabled = state !is BarangState.Loading,
                         modifier = Modifier.weight(1f).height(50.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F1A9C)),
                         shape = RoundedCornerShape(25.dp)
                     ) {
-                        Text("Tambah Produk", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text(if (isEditMode) "Simpan Perubahan" else "Tambah Produk", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
                 Spacer(modifier = Modifier.height(40.dp))
@@ -261,7 +287,7 @@ fun CustomDropdownField(
             readOnly = true,
             placeholder = { Text(placeholder, fontSize = 14.sp, color = Color.Gray) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.fillMaxWidth().menuAnchor(), // menuAnchor penting agar menu nempel ke textfield
+            modifier = Modifier.fillMaxWidth().menuAnchor(),
             shape = RoundedCornerShape(16.dp),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xFFF1F4F9),

@@ -1,3 +1,5 @@
+// C:/Users/ACER/TugasAkhirMobel/app/src/main/java/com/example/tugasakhirmobel/ui/screens/barang/BarangViewModel.kt
+
 package com.example.tugasakhirmobel.ui.screens.barang
 
 import android.content.Context
@@ -5,6 +7,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tugasakhirmobel.data.remote.model.BarangModel
+import com.example.tugasakhirmobel.data.remote.model.BarangRequest
 import com.example.tugasakhirmobel.data.repository.BarangRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -38,6 +41,9 @@ class BarangViewModel @Inject constructor(
     private val _barangList = MutableStateFlow<List<BarangModel>>(emptyList())
     val barangList: StateFlow<List<BarangModel>> = _barangList.asStateFlow()
 
+    // State untuk menyimpan item yang akan diedit
+    var itemToEdit: BarangModel? = null
+
     fun loadBarang() {
         viewModelScope.launch {
             try {
@@ -59,13 +65,11 @@ class BarangViewModel @Inject constructor(
         }
 
         _barangState.value = BarangState.Loading
-
         viewModelScope.launch {
             try {
                 val file = uriToFile(imageUri, context) ?: throw Exception("Gagal memproses gambar")
                 val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
 
-                // Perbaikan: Gunakan createFormData untuk semua field teks agar FastAPI tidak Error 500
                 val bodyNama = MultipartBody.Part.createFormData("nama_barang", nama)
                 val bodySku = MultipartBody.Part.createFormData("sku", sku)
                 val bodyKategori = MultipartBody.Part.createFormData("kategori", kategori)
@@ -81,10 +85,56 @@ class BarangViewModel @Inject constructor(
                         _barangState.value = BarangState.Success
                         loadBarang()
                     },
-                    onFailure = { _barangState.value = BarangState.Error("Server Error (500)") }
+                    onFailure = { _barangState.value = BarangState.Error("Gagal menyimpan data") }
                 )
             } catch (e: Exception) {
                 _barangState.value = BarangState.Error(e.localizedMessage ?: "Gagal")
+            }
+        }
+    }
+
+    fun updateBarang(
+        id: Int, nama: String, sku: String, kategori: String, harga: String,
+        supplier: String, stok: String, imageUrl: String
+    ) {
+        _barangState.value = BarangState.Loading
+        viewModelScope.launch {
+            try {
+                val request = BarangRequest(
+                    namaBarang = nama,
+                    sku = sku,
+                    kategori = kategori,
+                    harga = harga.toIntOrNull() ?: 0,
+                    supplier = supplier,
+                    stok = stok.toIntOrNull() ?: 0,
+                    imageUrl = imageUrl
+                )
+                val response = repository.updateBarang(id, request)
+                if (response.isSuccessful) {
+                    _barangState.value = BarangState.Success
+                    loadBarang()
+                } else {
+                    _barangState.value = BarangState.Error("Gagal memperbarui data")
+                }
+            } catch (e: Exception) {
+                _barangState.value = BarangState.Error(e.localizedMessage ?: "Terjadi kesalahan")
+            }
+        }
+    }
+
+    fun hapusBarang(id: Int) {
+        _barangState.value = BarangState.Loading
+        viewModelScope.launch {
+            try {
+                val response = repository.hapusBarang(id)
+                if (response.isSuccessful) {
+                    _barangState.value = BarangState.Success
+                    loadBarang()
+                } else {
+                    _barangState.value = BarangState.Error("Gagal menghapus barang")
+                }
+            } catch (e: Exception) {
+                _barangState.value = BarangState.Error(e.localizedMessage ?: "Error")
             }
         }
     }
@@ -101,5 +151,8 @@ class BarangViewModel @Inject constructor(
         } catch (e: Exception) { null }
     }
 
-    fun resetState() { _barangState.value = BarangState.Idle }
+    fun resetState() {
+        _barangState.value = BarangState.Idle
+        itemToEdit = null
+    }
 }
