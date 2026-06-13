@@ -52,6 +52,7 @@ fun FormBarangScreen(
     var price by remember { mutableStateOf(item?.harga?.toString() ?: "") }
     var supplier by remember { mutableStateOf(item?.supplier ?: "") }
     var category by remember { mutableStateOf(item?.kategori ?: "") }
+    var minStock by remember { mutableStateOf("") }
 
     val daftarKategoriForm = listOf("Elektronik", "Furnitur", "ATK", "Pakaian", "Makanan & Minuman", "Peralatan")
 
@@ -175,6 +176,7 @@ fun FormBarangScreen(
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         CustomLabel("Stok Minimum")
+                        // 👇 UBAH BARIS INI 👇
                         CustomInputField(value = minStock, onValueChange = { minStock = it }, placeholder = "0")
                     }
                 }
