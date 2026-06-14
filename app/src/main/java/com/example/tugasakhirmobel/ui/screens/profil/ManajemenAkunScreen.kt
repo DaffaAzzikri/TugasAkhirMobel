@@ -23,10 +23,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.foundation.lazy.items
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ManajemenAkunScreen(onBackClick: () -> Unit) {
+fun ManajemenAkunScreen(
+    onBackClick: () -> Unit,
+    viewModel: ProfilViewModel = hiltViewModel()
+) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedTab by remember { mutableStateOf("Semua") }
 
@@ -34,6 +39,18 @@ fun ManajemenAkunScreen(onBackClick: () -> Unit) {
     var showTambahDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var userNameToEdit by remember { mutableStateOf("") } // Penampung data saat edit ditekan
+
+    var userIdToEdit by remember { mutableIntStateOf(0) }
+    var userStatusToEdit by remember { mutableStateOf(true) }
+
+    // Tarik data asli dari ViewModel
+    val userList by viewModel.userList.collectAsState()
+    val profilState by viewModel.state.collectAsState()
+
+    // Muat data otomatis saat layar dibuka
+    LaunchedEffect(Unit) {
+        viewModel.loadUsers()
+    }
 
     val gradientHeader = Brush.verticalGradient(listOf(Color(0xFF6A1B9A), Color(0xFFC62828)))
 
@@ -112,24 +129,26 @@ fun ManajemenAkunScreen(onBackClick: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(bottom = 20.dp)
         ) {
-            item {
-                UserItemCard(
-                    name = "Super Admin", email = "superadmin@mobel.id", role = "Super Admin",
-                    isMe = true, isActive = true,
-                    onEditClick = { userNameToEdit = "Super Admin"; showEditDialog = true }
-                )
-            }
-            item {
-                UserItemCard(
-                    name = "Admin Budi", email = "budi@mobel.id", role = "Admin", isActive = true,
-                    onEditClick = { userNameToEdit = "Admin Budi"; showEditDialog = true }
-                )
-            }
-            item {
-                UserItemCard(
-                    name = "Admin Tono", email = "tono@mobel.id", role = "Admin", isActive = false,
-                    onEditClick = { userNameToEdit = "Admin Tono"; showEditDialog = true }
-                )
+            items(userList) { user ->
+                // Logika Filter Tab
+                val isVisible = selectedTab == "Semua" || user.role == selectedTab
+
+                if (isVisible) {
+                    UserItemCard(
+                        name = user.nama,
+                        email = user.email,
+                        role = user.role,
+                        isMe = false, // Bisa diganti jika sudah ada sesi login
+                        isActive = user.isActive,
+                        onEditClick = {
+                            // Simpan data target ke state sebelum buka dialog
+                            userNameToEdit = user.nama
+                            userIdToEdit = user.id
+                            userStatusToEdit = user.isActive
+                            showEditDialog = true
+                        }
+                    )
+                }
             }
         }
     }
@@ -138,16 +157,22 @@ fun ManajemenAkunScreen(onBackClick: () -> Unit) {
     if (showTambahDialog) {
         TambahPenggunaDialog(
             onDismiss = { showTambahDialog = false },
-            onSave = { showTambahDialog = false }
+            onSave = { namaBaru, emailBaru, roleBaru ->
+                // Tembak API Tambah
+                viewModel.tambahUserBaru(namaBaru, emailBaru, roleBaru)
+                showTambahDialog = false
+            }
         )
     }
 
     if (showEditDialog) {
         EditPenggunaDialog(
             initialName = userNameToEdit,
-            initialStatus = true, // Dummy status awal
+            initialStatus = userStatusToEdit,
             onDismiss = { showEditDialog = false },
             onSave = { namaBaru, statusBaru ->
+                // Tembak API Ubah Status
+                viewModel.ubahStatusUser(userIdToEdit, statusBaru)
                 showEditDialog = false
             }
         )
@@ -158,7 +183,10 @@ fun ManajemenAkunScreen(onBackClick: () -> Unit) {
 // DIALOG TAMBAH PENGGUNA (LENGKAP)
 // ==========================================
 @Composable
-fun TambahPenggunaDialog(onDismiss: () -> Unit, onSave: () -> Unit) {
+fun TambahPenggunaDialog(
+    onDismiss: () -> Unit,
+    onSave: (String, String, String) -> Unit // 👇 Ubah bagian ini
+) {
     var nama by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -218,7 +246,8 @@ fun TambahPenggunaDialog(onDismiss: () -> Unit, onSave: () -> Unit) {
                     OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp), border = BorderStroke(1.dp, Color.LightGray)) {
                         Text("Batal", color = Color.Black)
                     }
-                    Button(onClick = onSave, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828)), shape = RoundedCornerShape(12.dp)) {
+                    Button(
+                        onClick = { onSave(nama, email, role) }, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828)), shape = RoundedCornerShape(12.dp)) {
                         Text("Tambah", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
