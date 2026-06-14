@@ -6,8 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.NorthEast
 import androidx.compose.material.icons.filled.Search
@@ -63,120 +65,76 @@ fun RiwayatScreen(
     val colorMasuk = Color(0xFF0D47A1) // Biru
     val colorKeluar = Color(0xFFD32F2F) // Merah
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF5F7FA))
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA)),
+        contentPadding = PaddingValues(bottom = 100.dp)
     ) {
-        // --- 1. HEADER SECTION (GRADASI & STATISTIK) ---
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(gradientBackground)
-                .padding(horizontal = 20.dp, vertical = 24.dp)
-        ) {
-            Column {
-                Text("Riwayat Barang", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                Text("Pergerakan fisik masuk & keluar", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Kartu Statistik Masuk & Keluar (Menggunakan data API)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    StatBox(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Default.NorthEast,
-                        count = (summaryData?.stokMasuk ?: 0).toString(),
-                        label = "Stok Masuk"
-                    )
-                    StatBox(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Default.SouthWest,
-                        count = (summaryData?.stokKeluar ?: 0).toString(),
-                        label = "Stok Keluar"
+        // --- 1. HEADER SECTION ---
+        item {
+            Box(modifier = Modifier.fillMaxWidth().background(gradientBackground).padding(horizontal = 20.dp, vertical = 24.dp)) {
+                Column {
+                    Text("Riwayat Barang", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Text("Pergerakan fisik masuk & keluar", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        StatBox(modifier = Modifier.weight(1f), icon = Icons.Default.NorthEast, count = (summaryData?.stokMasuk ?: 0).toString(), label = "Stok Masuk")
+                        StatBox(modifier = Modifier.weight(1f), icon = Icons.Default.SouthWest, count = (summaryData?.stokKeluar ?: 0).toString(), label = "Stok Keluar")
+                    }
+                    Spacer(modifier = Modifier.height(20.dp))
+                    OutlinedTextField(
+                        value = searchQuery, onValueChange = { searchQuery = it },
+                        placeholder = { Text("Cari barang atau operator...", color = Color.White.copy(alpha = 0.6f)) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = "Cari", tint = Color.White.copy(alpha = 0.7f)) },
+                        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White.copy(alpha = 0.15f), unfocusedContainerColor = Color.White.copy(alpha = 0.15f),
+                            focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent,
+                            focusedTextColor = Color.White, cursorColor = Color.White
+                        ), singleLine = true
                     )
                 }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Kotak Pencarian
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Cari barang atau operator...", color = Color.White.copy(alpha = 0.6f)) },
-                    leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = "Cari", tint = Color.White.copy(alpha = 0.7f)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.White.copy(alpha = 0.15f),
-                        unfocusedContainerColor = Color.White.copy(alpha = 0.15f),
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent,
-                        focusedTextColor = Color.White,
-                        cursorColor = Color.White
-                    ),
-                    singleLine = true
-                )
             }
         }
 
-        // --- 2. FILTER SECTION (SEMUA, MASUK, KELUAR) ---
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            FilterTab(text = "Semua", isSelected = selectedFilter == "Semua", onClick = { selectedFilter = "Semua" }, isGradient = true)
-            FilterTab(text = "Masuk", isSelected = selectedFilter == "Masuk", onClick = { selectedFilter = "Masuk" })
-            FilterTab(text = "Keluar", isSelected = selectedFilter == "Keluar", onClick = { selectedFilter = "Keluar" })
+        // --- 2. FILTER SECTION ---
+        item {
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                FilterTab(text = "Semua", isSelected = selectedFilter == "Semua", onClick = { selectedFilter = "Semua" }, isGradient = true)
+                FilterTab(text = "Masuk", isSelected = selectedFilter == "Masuk", onClick = { selectedFilter = "Masuk" })
+                FilterTab(text = "Keluar", isSelected = selectedFilter == "Keluar", onClick = { selectedFilter = "Keluar" })
+            }
         }
 
-        // --- 3. LIST RIWAYAT BARANG ---
-        Box(modifier = Modifier.fillMaxSize()) {
-            if (state is RiwayatState.Loading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF6A1B9A))
-            } else if (state is RiwayatState.Error) {
-                Column(
-                    modifier = Modifier.align(Alignment.Center).padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+        // --- 3. LIST ATAU STATE LAINNYA ---
+        if (state is RiwayatState.Loading) {
+            item {
+                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color(0xFF6A1B9A))
+                }
+            }
+        } else if (state is RiwayatState.Error) {
+            item {
+                Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(text = (state as RiwayatState.Error).message, color = Color.Red, fontSize = 14.sp)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = { viewModel.loadRiwayat() }) {
-                        Text("Coba Lagi")
-                    }
+                    Button(onClick = { viewModel.loadRiwayat() }) { Text("Coba Lagi") }
                 }
-            } else if (filteredRiwayat.isEmpty()) {
-                Text(
-                    text = "Tidak ada riwayat ditemukan",
-                    modifier = Modifier.align(Alignment.Center),
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth().fillMaxHeight().padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 100.dp)
-                ) {
-                    items(filteredRiwayat) { item ->
-                        val isMasuk = item.jenis == "masuk"
-                        HistoryItemCard(
-                            title = item.namaBarang,
-                            description = item.keterangan,
-                            date = item.tanggal,
-                            operator = item.admin,
-                            amount = if (isMasuk) "+${item.jumlah}" else "-${item.jumlah}",
-                            imageUrl = item.imageUrl,
-                            isMasuk = isMasuk,
-                            colorMasuk = colorMasuk,
-                            colorKeluar = colorKeluar
-                        )
-                    }
+            }
+        } else if (filteredRiwayat.isEmpty()) {
+            item {
+                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                    Text(text = "Tidak ada riwayat ditemukan", color = Color.Gray, fontSize = 14.sp)
+                }
+            }
+        } else {
+            items(filteredRiwayat) { item ->
+                val isMasuk = item.jenis == "masuk"
+                Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+                    HistoryItemCard(
+                        title = item.namaBarang, description = item.keterangan, date = item.tanggal,
+                        operator = item.admin, amount = if (isMasuk) "+${item.jumlah}" else "-${item.jumlah}",
+                        imageUrl = item.imageUrl, isMasuk = isMasuk, colorMasuk = colorMasuk, colorKeluar = colorKeluar
+                    )
                 }
             }
         }

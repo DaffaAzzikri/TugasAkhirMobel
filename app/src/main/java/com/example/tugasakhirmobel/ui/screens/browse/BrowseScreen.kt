@@ -9,6 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -207,180 +208,111 @@ fun BrowseScreen(
         )
     }
 
-    val gradientBackground = Brush.verticalGradient(
-        colors = listOf(Color(0xFF3F1A9C), Color(0xFFE91E63))
-    )
+    val gradientBackground = Brush.verticalGradient(listOf(Color(0xFF3F1A9C), Color(0xFFE91E63)))
 
-    Column(
-        modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA))
+    // 👇 LAZYCOLUMN UTAMA SEBAGAI PONDASI LAYAR 👇
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA)),
+        contentPadding = PaddingValues(bottom = 100.dp)
     ) {
-        // --- 1. HEADER & SEARCH BAR ---
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(gradientBackground)
-                .padding(horizontal = 20.dp, vertical = 20.dp)
-        ) {
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("Daftar Barang", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                        Text("${filteredList.size} produk", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-                    }
-
-                    Button(
-                        onClick = onAddClick,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.2f)),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = "Tambah", tint = Color.White)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Tambah", color = Color.White, fontWeight = FontWeight.Bold)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Implementasi Bar Pencarian
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Cari nama atau SKU...", color = Color.White.copy(alpha = 0.6f)) },
-                    leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = "Cari", tint = Color.White.copy(alpha = 0.7f)) },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Hapus", tint = Color.White.copy(alpha = 0.7f))
-                            }
+        // --- 1. HEADER & SEARCH BAR DIBUNGKUS ITEM ---
+        item {
+            Box(modifier = Modifier.fillMaxWidth().background(gradientBackground).padding(horizontal = 20.dp, vertical = 20.dp)) {
+                Column {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Column {
+                            Text("Daftar Barang", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                            Text("${filteredList.size} produk", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
                         }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.White.copy(alpha = 0.12f),
-                        unfocusedContainerColor = Color.White.copy(alpha = 0.12f),
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent,
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = Color.White
-                    ),
-                    singleLine = true
-                )
-            }
-        }
-
-        // --- 2. FILTER BADGES ---
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Dropdown Kategori
-            Box {
-                FilterChip(
-                    selected = selectedKategori != "Semua Kategori",
-                    onClick = { kategoriExpanded = true },
-                    label = { Text(if (selectedKategori == "Semua Kategori") "Kategori ▾" else "$selectedKategori ▾") },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color(0xFFE3F2FD),
-                        selectedLabelColor = Color(0xFF0D47A1)
-                    )
-                )
-
-                DropdownMenu(
-                    expanded = kategoriExpanded,
-                    onDismissRequest = { kategoriExpanded = false },
-                    modifier = Modifier.background(Color.White).width(240.dp)
-                ) {
-                    daftarKategori.forEach { kategori ->
-                        DropdownMenuItem(
-                            text = {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = kategori,
-                                        color = Color.Black,
-                                        fontWeight = if (selectedKategori == kategori) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                    if (selectedKategori == kategori) {
-                                        Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = Color(0xFF0D47A1), modifier = Modifier.size(18.dp))
-                                    }
-                                }
-                            },
-                            onClick = {
-                                selectedKategori = kategori
-                                kategoriExpanded = false
+                        Button(
+                            onClick = onAddClick, colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.2f)), shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Add, contentDescription = "Tambah", tint = Color.White)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Tambah", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = searchQuery, onValueChange = { searchQuery = it },
+                        placeholder = { Text("Cari nama atau SKU...", color = Color.White.copy(alpha = 0.6f)) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = "Cari", tint = Color.White.copy(alpha = 0.7f)) },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) { Icon(Icons.Default.Clear, contentDescription = "Hapus", tint = Color.White.copy(alpha = 0.7f)) }
                             }
-                        )
-                    }
-                }
-            }
-
-            // Chips Status Stok
-            listOf("Semua Status", "Tersedia", "Stok Rendah", "Habis").forEach { status ->
-                FilterChip(
-                    selected = selectedFilter == status,
-                    onClick = { selectedFilter = status },
-                    label = { Text(status) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = when(status) {
-                            "Tersedia" -> Color(0xFF2E7D32)
-                            "Stok Rendah" -> Color(0xFFFFB300)
-                            "Habis" -> Color(0xFFC62828)
-                            else -> Color(0xFF3F1A9C)
                         },
-                        selectedLabelColor = Color.White
+                        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White.copy(alpha = 0.12f), unfocusedContainerColor = Color.White.copy(alpha = 0.12f),
+                            focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent,
+                            focusedTextColor = Color.White, unfocusedTextColor = Color.White, cursorColor = Color.White
+                        ),
+                        singleLine = true
                     )
-                )
+                }
             }
         }
 
-        // --- 3. DAFTAR BARANG (LazyColumn) ---
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp)
-        ) {
-            items(filteredList) { barang ->
-                val statusText = when {
-                    barang.stok <= 0 -> "Habis"
-                    barang.stok <= barang.stokMinimum -> "Stok Rendah"
-                    else -> "Tersedia"
-                }
-                ProductItemCard(
-                    name = barang.namaBarang,
-                    code = "${barang.sku} · ${barang.supplier}",
-                    category = barang.kategori,
-                    stock = "${barang.stok}",
-                    price = "Rp ${barang.harga}",
-                    status = statusText,
-                    isAvailable = barang.stok > barang.stokMinimum,
-                    imageUrl = barang.imageUrl,
-                    onStokMasuk = {
-                        itemForStokTransaksi = barang
-                        isStokMasukMode = true
-                        showStokDialog = true
-                    },
-                    onStokKeluar = {
-                        itemForStokTransaksi = barang
-                        isStokMasukMode = false
-                        showStokDialog = true
-                    },
-                    onEdit = { onEditClick(barang) },
-                    onDelete = {
-                        itemToDelete = barang
-                        showDeleteDialog = true
+        // --- 2. FILTER BADGES DIBUNGKUS ITEM ---
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box {
+                    FilterChip(
+                        selected = selectedKategori != "Semua Kategori", onClick = { kategoriExpanded = true },
+                        label = { Text(if (selectedKategori == "Semua Kategori") "Kategori ▾" else "$selectedKategori ▾") },
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Color(0xFFE3F2FD), selectedLabelColor = Color(0xFF0D47A1))
+                    )
+                    DropdownMenu(expanded = kategoriExpanded, onDismissRequest = { kategoriExpanded = false }, modifier = Modifier.background(Color.White).width(240.dp)) {
+                        daftarKategori.forEach { kategori ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                        Text(text = kategori, color = Color.Black, fontWeight = if (selectedKategori == kategori) FontWeight.Bold else FontWeight.Normal)
+                                        if (selectedKategori == kategori) Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = Color(0xFF0D47A1), modifier = Modifier.size(18.dp))
+                                    }
+                                },
+                                onClick = { selectedKategori = kategori; kategoriExpanded = false }
+                            )
+                        }
                     }
+                }
+                listOf("Semua Status", "Tersedia", "Stok Rendah", "Habis").forEach { status ->
+                    FilterChip(
+                        selected = selectedFilter == status, onClick = { selectedFilter = status }, label = { Text(status) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = when(status) {
+                                "Tersedia" -> Color(0xFF2E7D32)
+                                "Stok Rendah" -> Color(0xFFFFB300)
+                                "Habis" -> Color(0xFFC62828)
+                                else -> Color(0xFF3F1A9C)
+                            },
+                            selectedLabelColor = Color.White
+                        )
+                    )
+                }
+            }
+        }
+
+        // --- 3. DAFTAR BARANG ---
+        items(filteredList) { barang ->
+            val statusText = when {
+                barang.stok <= 0 -> "Habis"
+                barang.stok <= barang.stokMinimum -> "Stok Rendah"
+                else -> "Tersedia"
+            }
+            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+                ProductItemCard(
+                    name = barang.namaBarang, code = "${barang.sku} · ${barang.supplier}", category = barang.kategori,
+                    stock = "${barang.stok}", price = "Rp ${barang.harga}", status = statusText,
+                    isAvailable = barang.stok > barang.stokMinimum, imageUrl = barang.imageUrl,
+                    onStokMasuk = { itemForStokTransaksi = barang; isStokMasukMode = true; showStokDialog = true },
+                    onStokKeluar = { itemForStokTransaksi = barang; isStokMasukMode = false; showStokDialog = true },
+                    onEdit = { onEditClick(barang) },
+                    onDelete = { itemToDelete = barang; showDeleteDialog = true }
                 )
             }
         }
