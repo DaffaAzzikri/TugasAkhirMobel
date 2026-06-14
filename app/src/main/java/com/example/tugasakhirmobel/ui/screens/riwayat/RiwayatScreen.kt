@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -19,20 +20,45 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RiwayatScreen() {
+fun RiwayatScreen(
+    viewModel: RiwayatViewModel = hiltViewModel()
+) {
+    // Collect State dari ViewModel
+    val riwayatList by viewModel.riwayatList.collectAsState()
+    val summaryData by viewModel.summaryData.collectAsState()
+    val state by viewModel.state.collectAsState()
+
     // State untuk Pencarian dan Filter
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("Semua") }
 
+    // Logic Filter Data
+    val filteredRiwayat = remember(riwayatList, searchQuery, selectedFilter) {
+        riwayatList.filter { item ->
+            val matchSearch = item.namaBarang.contains(searchQuery, ignoreCase = true) ||
+                             item.admin.contains(searchQuery, ignoreCase = true) ||
+                             item.keterangan.contains(searchQuery, ignoreCase = true)
+            val matchFilter = when (selectedFilter) {
+                "Masuk" -> item.jenis == "masuk"
+                "Keluar" -> item.jenis == "keluar"
+                else -> true
+            }
+            matchSearch && matchFilter
+        }
+    }
+
     // Warna Tema Aplikasi
     val gradientBackground = Brush.verticalGradient(
-        colors = listOf(Color(0xFF6A1B9A), Color(0xFFE91E63)) // Biru ke Merah sesuai gambar
+        colors = listOf(Color(0xFF6A1B9A), Color(0xFFE91E63))
     )
     val colorMasuk = Color(0xFF0D47A1) // Biru
     val colorKeluar = Color(0xFFD32F2F) // Merah
@@ -50,19 +76,28 @@ fun RiwayatScreen() {
                 .padding(horizontal = 20.dp, vertical = 24.dp)
         ) {
             Column {
-                // Judul
                 Text("Riwayat Barang", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 Text("Pergerakan fisik masuk & keluar", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Kartu Statistik Masuk & Keluar
+                // Kartu Statistik Masuk & Keluar (Menggunakan data API)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    StatBox(modifier = Modifier.weight(1f), icon = Icons.Default.NorthEast, count = "4", label = "Stok Masuk")
-                    StatBox(modifier = Modifier.weight(1f), icon = Icons.Default.SouthWest, count = "4", label = "Stok Keluar")
+                    StatBox(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Default.NorthEast,
+                        count = (summaryData?.stokMasuk ?: 0).toString(),
+                        label = "Stok Masuk"
+                    )
+                    StatBox(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Default.SouthWest,
+                        count = (summaryData?.stokKeluar ?: 0).toString(),
+                        label = "Stok Keluar"
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -101,53 +136,52 @@ fun RiwayatScreen() {
         }
 
         // --- 3. LIST RIWAYAT BARANG ---
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 100.dp) // Jarak aman untuk Navbar
-        ) {
-            // Data Dummy Sementara untuk Tampilan Visual
-            item {
-                HistoryItemCard(
-                    title = "Laptop Asus VivoBook 15",
-                    description = "Restock dari supplier",
-                    date = "09/06/2026 09:15",
-                    operator = "Admin Budi",
-                    amount = "+5",
-                    isMasuk = true,
-                    colorMasuk = colorMasuk,
-                    colorKeluar = colorKeluar
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (state is RiwayatState.Loading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF6A1B9A))
+            } else if (state is RiwayatState.Error) {
+                Column(
+                    modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(text = (state as RiwayatState.Error).message, color = Color.Red, fontSize = 14.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = { viewModel.loadRiwayat() }) {
+                        Text("Coba Lagi")
+                    }
+                }
+            } else if (filteredRiwayat.isEmpty()) {
+                Text(
+                    text = "Tidak ada riwayat ditemukan",
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Color.Gray,
+                    fontSize = 14.sp
                 )
-            }
-            item {
-                HistoryItemCard(
-                    title = "Mouse Wireless Logitech",
-                    description = "Diambil divisi Marketing",
-                    date = "08/06/2026 14:30",
-                    operator = "Admin Sari",
-                    amount = "-3",
-                    isMasuk = false,
-                    colorMasuk = colorMasuk,
-                    colorKeluar = colorKeluar
-                )
-            }
-            item {
-                HistoryItemCard(
-                    title = "Pulpen Pilot G2 (12pcs)",
-                    description = "Pembelian rutin",
-                    date = "07/06/2026 10:00",
-                    operator = "Admin Budi",
-                    amount = "+20",
-                    isMasuk = true,
-                    colorMasuk = colorMasuk,
-                    colorKeluar = colorKeluar
-                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().fillMaxHeight().padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 100.dp)
+                ) {
+                    items(filteredRiwayat) { item ->
+                        val isMasuk = item.jenis == "masuk"
+                        HistoryItemCard(
+                            title = item.namaBarang,
+                            description = item.keterangan,
+                            date = item.tanggal,
+                            operator = item.admin,
+                            amount = if (isMasuk) "+${item.jumlah}" else "-${item.jumlah}",
+                            imageUrl = item.imageUrl,
+                            isMasuk = isMasuk,
+                            colorMasuk = colorMasuk,
+                            colorKeluar = colorKeluar
+                        )
+                    }
+                }
             }
         }
     }
 }
-
-// --- KOMPONEN PELENGKAP UI ---
 
 @Composable
 fun StatBox(modifier: Modifier = Modifier, icon: ImageVector, count: String, label: String) {
@@ -206,6 +240,7 @@ fun HistoryItemCard(
     date: String,
     operator: String,
     amount: String,
+    imageUrl: String,
     isMasuk: Boolean,
     colorMasuk: Color,
     colorKeluar: Color
@@ -225,15 +260,15 @@ fun HistoryItemCard(
         ) {
             // Gambar Item dengan Badge Status Overlay
             Box(modifier = Modifier.size(56.dp)) {
-                // Placeholder Gambar (Bisa diganti dengan Coil Image nanti)
-                Box(
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(0xFFE0E0E0), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(title.first().toString(), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
-                }
+                        .clip(CircleShape)
+                        .background(Color(0xFFE0E0E0)),
+                    contentScale = ContentScale.Crop
+                )
 
                 // Overlay Badge Kecil (+ / -) di pojok kanan bawah
                 Box(

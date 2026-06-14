@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tugasakhirmobel.data.remote.model.BarangModel
 import com.example.tugasakhirmobel.data.remote.model.DashboardData
+import com.example.tugasakhirmobel.data.remote.model.RiwayatModel
 import com.example.tugasakhirmobel.data.repository.DashboardRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +33,12 @@ class DashboardViewModel @Inject constructor(
     private val _state = MutableStateFlow<DashboardState>(DashboardState.Idle)
     val state: StateFlow<DashboardState> = _state.asStateFlow()
 
+    private val _pergerakanTerakhir =
+        MutableStateFlow<List<RiwayatModel>>(emptyList())
+
+    val pergerakanTerakhir: StateFlow<List<RiwayatModel>>
+            = _pergerakanTerakhir.asStateFlow()
+
     init {
         loadDashboard()
     }
@@ -42,13 +49,26 @@ class DashboardViewModel @Inject constructor(
             try {
                 val dashboardResponse = repository.getDashboardSummary()
                 val perhatianResponse = repository.getPerluPerhatian()
+                val pergerakanResponse = repository.getPergerakanTerakhir()
 
-                if (dashboardResponse.isSuccessful && perhatianResponse.isSuccessful) {
-                    _dashboardData.value = dashboardResponse.body()?.data
-                    _perluPerhatian.value = perhatianResponse.body()?.data ?: emptyList()
+                if (
+                    dashboardResponse.isSuccessful &&
+                    perhatianResponse.isSuccessful &&
+                    pergerakanResponse.isSuccessful
+                ) {
+                    _dashboardData.value =
+                        dashboardResponse.body()?.data
+
+                    _perluPerhatian.value =
+                        perhatianResponse.body()?.data ?: emptyList()
+
+                    _pergerakanTerakhir.value =
+                        pergerakanResponse.body()?.data ?: emptyList()
+
                     _state.value = DashboardState.Idle
                 } else {
-                    _state.value = DashboardState.Error("Gagal memuat data dari server")
+                    _state.value =
+                        DashboardState.Error("Gagal memuat data dari server")
                 }
             } catch (e: Exception) {
                 _state.value = DashboardState.Error(e.localizedMessage ?: "Terjadi kesalahan koneksi")
