@@ -1,16 +1,15 @@
 package com.example.tugasakhirmobel.data.repository
 
-import com.example.tugasakhirmobel.data.remote.RetrofitClient
 import com.example.tugasakhirmobel.data.remote.api.ProfilApiService
 import com.example.tugasakhirmobel.data.remote.model.UserRequest
 import com.example.tugasakhirmobel.data.remote.model.UserUpdateRequest
 import javax.inject.Inject
+import javax.inject.Singleton
 
-class ProfilRepository @Inject constructor() {
-
-    // Inisialisasi API Service langsung menggunakan RetrofitClient bawaan proyek
-    private val apiService = RetrofitClient.instance.create(ProfilApiService::class.java)
-
+@Singleton
+class ProfilRepository @Inject constructor(
+    private val apiService: ProfilApiService
+) {
     suspend fun fetchSemuaUser() = apiService.getSemuaUser()
 
     suspend fun tambahUser(request: UserRequest) = apiService.tambahUser(request)

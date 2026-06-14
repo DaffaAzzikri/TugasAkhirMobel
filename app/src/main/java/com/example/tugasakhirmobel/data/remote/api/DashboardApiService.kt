@@ -14,6 +14,7 @@ interface DashboardApiService {
     @GET("api/v1/dashboard/perlu-perhatian")
     suspend fun getPerluPerhatian(): Response<BarangListResponse>
 
+    // Tambahan untuk sinkronisasi Pergerakan Terakhir di Dashboard
     @GET("api/v1/dashboard/pergerakan-terakhir")
     suspend fun getPergerakanTerakhir(): Response<RiwayatResponse>
 }

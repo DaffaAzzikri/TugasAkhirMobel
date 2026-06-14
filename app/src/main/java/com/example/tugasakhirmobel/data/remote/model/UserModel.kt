@@ -14,11 +14,13 @@ data class SingleUserResponse(
 )
 
 data class UserModel(
-    val id: Int,
-    val nama: String,
-    val email: String,
-    val role: String,
-    @SerializedName("is_active") val isActive: Boolean
+    val id: Int = 0,
+    @SerializedName("firebase_uid") val firebaseUid: String? = null,
+    val nama: String? = null,
+    val email: String? = null,
+    val role: String? = null,
+    @SerializedName("is_active") val isActive: Boolean = true,
+    @SerializedName("created_at") val createdAt: String? = null
 )
 
 // Model untuk mengirim data saat Tambah User
