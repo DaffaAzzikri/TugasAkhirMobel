@@ -6,6 +6,7 @@ import com.example.tugasakhirmobel.data.remote.model.LogModel
 import com.example.tugasakhirmobel.data.remote.model.UserModel
 import com.example.tugasakhirmobel.data.remote.model.UserRequest
 import com.example.tugasakhirmobel.data.repository.ProfilRepository
+import com.example.tugasakhirmobel.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,17 +23,48 @@ sealed class ProfilState {
 
 @HiltViewModel
 class ProfilViewModel @Inject constructor(
-    private val repository: ProfilRepository
+    private val repository: ProfilRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<ProfilState>(ProfilState.Idle)
     val state: StateFlow<ProfilState> = _state.asStateFlow()
+
+    private val _profileState = MutableStateFlow<ProfilState>(ProfilState.Idle)
+    val profileState: StateFlow<ProfilState> = _profileState.asStateFlow()
+
+    private val _currentUser = MutableStateFlow<UserModel?>(null)
+    val currentUser: StateFlow<UserModel?> = _currentUser.asStateFlow()
 
     private val _userList = MutableStateFlow<List<UserModel>>(emptyList())
     val userList: StateFlow<List<UserModel>> = _userList.asStateFlow()
 
     private val _logList = MutableStateFlow<List<LogModel>>(emptyList())
     val logList: StateFlow<List<LogModel>> = _logList.asStateFlow()
+
+    fun loadCurrentUser() {
+        _profileState.value = ProfilState.Loading
+        viewModelScope.launch {
+            try {
+                val response = userRepository.getCurrentUser()
+                if (response.isSuccessful) {
+                    val user = response.body()
+                    if (user != null && !user.nama.isNullOrBlank() && !user.email.isNullOrBlank()) {
+                        _currentUser.value = user
+                        _profileState.value = ProfilState.Success
+                    } else {
+                        _profileState.value = ProfilState.Error("Data profil tidak lengkap dari server.")
+                    }
+                } else {
+                    _profileState.value = ProfilState.Error("Gagal memuat profil. Silakan coba lagi.")
+                }
+            } catch (e: Exception) {
+                _profileState.value = ProfilState.Error(
+                    "Tidak dapat terhubung ke server. Periksa koneksi internet Anda."
+                )
+            }
+        }
+    }
 
     fun loadUsers() {
         _state.value = ProfilState.Loading

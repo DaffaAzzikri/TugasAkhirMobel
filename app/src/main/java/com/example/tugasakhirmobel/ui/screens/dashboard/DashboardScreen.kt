@@ -1,6 +1,8 @@
 package com.example.tugasakhirmobel.ui.screens.dashboard
 
 import androidx.compose.foundation.background
+import com.example.tugasakhirmobel.ui.screens.dashboard.DashboardState
+import com.example.tugasakhirmobel.ui.screens.dashboard.DashboardViewModel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn

@@ -19,18 +19,106 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 @Composable
 fun ProfileScreen(
     onLogoutClick: () -> Unit,
+    onManageAccountClick: () -> Unit,
+    viewModel: ProfilViewModel = hiltViewModel()
+) {
+    val profileState by viewModel.profileState.collectAsState()
+    val currentUser by viewModel.currentUser.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadCurrentUser()
+    }
+
+    when (val state = profileState) {
+        ProfilState.Idle, ProfilState.Loading -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFF5F7FA)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Color(0xFF6A1B9A))
+            }
+        }
+        is ProfilState.Error -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFF5F7FA))
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Default.ErrorOutline,
+                        contentDescription = null,
+                        tint = Color(0xFFC62828),
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        state.message,
+                        textAlign = TextAlign.Center,
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = { viewModel.loadCurrentUser() },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6A1B9A))
+                    ) {
+                        Text("Coba Lagi")
+                    }
+                }
+            }
+        }
+        ProfilState.Success -> {
+            currentUser?.let { user ->
+                ProfileContent(
+                    userName = user.nama.orEmpty(),
+                    userEmail = user.email.orEmpty(),
+                    userRole = user.role.orEmpty(),
+                    createdAt = formatCreatedAt(user.createdAt),
+                    isSuperAdmin = user.role?.equals("Super Admin", ignoreCase = true) == true,
+                    onLogoutClick = onLogoutClick,
+                    onManageAccountClick = onManageAccountClick
+                )
+            } ?: run {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFFF5F7FA)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Data profil tidak tersedia.", color = Color.Gray)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileContent(
+    userName: String,
+    userEmail: String,
+    userRole: String,
+    createdAt: String,
+    isSuperAdmin: Boolean,
+    onLogoutClick: () -> Unit,
     onManageAccountClick: () -> Unit
 ) {
-    // --- MOCK ROLE ---
-    val userRole = "Superadmin"
-    val userName = "Super Admin"
-    val userEmail = "superadmin@mobel.id"
+    val avatarInitials = getInitialsFromName(userName)
 
     val gradientPurple = Brush.verticalGradient(
         colors = listOf(Color(0xFF6A1B9A), Color(0xFFE91E63))
@@ -42,7 +130,6 @@ fun ProfileScreen(
             .background(Color(0xFFF5F7FA))
             .verticalScroll(rememberScrollState())
     ) {
-        // --- 1. HEADER & AVATAR ---
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -63,7 +150,12 @@ fun ProfileScreen(
                             .background(Color.White.copy(alpha = 0.3f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(userName.take(2).uppercase(), color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            avatarInitials,
+                            color = Color.White,
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -80,15 +172,24 @@ fun ProfileScreen(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.VerifiedUser, contentDescription = null, tint = Color(0xFF1A237E), modifier = Modifier.size(14.dp))
+                        Icon(
+                            Icons.Default.VerifiedUser,
+                            contentDescription = null,
+                            tint = Color(0xFF1A237E),
+                            modifier = Modifier.size(14.dp)
+                        )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(userRole, color = Color(0xFF1A237E), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            userRole,
+                            color = Color(0xFF1A237E),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
         }
 
-        // --- 2. DETAIL AKUN TERPADU ---
         Column(modifier = Modifier.padding(20.dp)) {
             Text("DETAIL AKUN", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
             Spacer(modifier = Modifier.height(12.dp))
@@ -99,7 +200,6 @@ fun ProfileScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    // Item yang bisa di-edit (Nama Lengkap)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -107,28 +207,35 @@ fun ProfileScreen(
                             .padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF3F51B5), modifier = Modifier.size(20.dp))
+                        Icon(
+                            Icons.Default.Person,
+                            contentDescription = null,
+                            tint = Color(0xFF3F51B5),
+                            modifier = Modifier.size(20.dp)
+                        )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text("Nama Lengkap", modifier = Modifier.weight(1f), fontSize = 14.sp, color = Color.Gray)
                         Text(userName, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Icon(Icons.Default.Edit, contentDescription = "Edit Nama", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Edit Nama",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Color(0xFFF5F7FA))
 
-                    // Item Read-Only
                     DetailRow(label = "Email", value = userEmail, icon = Icons.Default.Email)
                     DetailRow(label = "Role", value = userRole, icon = Icons.Default.AccountCircle)
-                    DetailRow(label = "Akun Dibuat", value = "01/01/2026", icon = Icons.Default.CalendarToday)
-                    DetailRow(label = "Login Terakhir", value = "12/06/2026", icon = Icons.Default.History)
+                    DetailRow(label = "Akun Dibuat", value = createdAt, icon = Icons.Default.CalendarToday)
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- 3. MENU MANAJEMEN AKUN (KHUSUS SUPERADMIN) ---
-            if (userRole == "Superadmin") {
+            if (isSuperAdmin) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -139,7 +246,9 @@ fun ProfileScreen(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
-                            modifier = Modifier.size(40.dp).background(Color.White.copy(alpha = 0.2f), CircleShape),
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(Color.White.copy(alpha = 0.2f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(Icons.Default.Group, contentDescription = null, tint = Color.White)
@@ -147,7 +256,11 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Manajemen Akun", color = Color.White, fontWeight = FontWeight.Bold)
-                            Text("Kelola semua pengguna sistem", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+                            Text(
+                                "Kelola semua pengguna sistem",
+                                color = Color.White.copy(alpha = 0.8f),
+                                fontSize = 12.sp
+                            )
                         }
                         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.White)
                     }
@@ -155,7 +268,6 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Info App
             OutlinedCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp)
@@ -163,16 +275,21 @@ fun ProfileScreen(
                 Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Info, contentDescription = null, tint = Color.Gray)
                     Spacer(modifier = Modifier.width(16.dp))
-                    Text("UTS Mobel Lejen v1.0.0\nSistem Manajemen Inventaris — 2026", fontSize = 12.sp, color = Color.Gray)
+                    Text(
+                        "UTS Mobel Lejen v1.0.0\nSistem Manajemen Inventaris — 2026",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Tombol Logout
             OutlinedButton(
                 onClick = onLogoutClick,
-                modifier = Modifier.fillMaxWidth().height(50.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
                 border = BorderStroke(1.dp, Color.Red),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -188,10 +305,50 @@ fun ProfileScreen(
 
 @Composable
 fun DetailRow(label: String, value: String, icon: ImageVector) {
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Icon(icon, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(12.dp))
         Text(label, modifier = Modifier.weight(1f), fontSize = 14.sp, color = Color.Gray)
         Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+private fun getInitialsFromName(nama: String?): String {
+    if (nama.isNullOrBlank()) return "?"
+    return nama.trim()
+        .split("\\s+".toRegex())
+        .filter { it.isNotEmpty() }
+        .take(2)
+        .joinToString("") { word -> word.first().uppercaseChar().toString() }
+        .ifEmpty { "?" }
+}
+
+private fun formatCreatedAt(isoDate: String?): String {
+    if (isoDate.isNullOrBlank()) return "—"
+    val outputFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    val patterns = listOf(
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"),
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS"),
+        DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    )
+    for (pattern in patterns) {
+        try {
+            return LocalDateTime.parse(isoDate, pattern).format(outputFormatter)
+        } catch (_: DateTimeParseException) {
+            // coba pattern berikutnya
+        }
+    }
+    return isoDate.substringBefore('T').let { datePart ->
+        try {
+            LocalDateTime.parse("${datePart}T00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"))
+                .format(outputFormatter)
+        } catch (_: DateTimeParseException) {
+            "—"
+        }
     }
 }

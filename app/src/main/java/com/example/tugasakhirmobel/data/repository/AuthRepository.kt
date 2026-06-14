@@ -2,26 +2,31 @@ package com.example.tugasakhirmobel.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class AuthRepository {
-
+@Singleton
+class AuthRepository @Inject constructor(
+    private val userRepository: UserRepository
+) {
     private val auth = FirebaseAuth.getInstance()
 
-    // Fungsi ini dipanggil oleh ViewModel
     suspend fun doLogin(email: String, sandi: String): Result<String> {
         return try {
-            // Tembak ke Firebase dan tunggu hasilnya (await)
             val result = auth.signInWithEmailAndPassword(email, sandi).await()
             val user = result.user
 
             if (user != null) {
-                Result.success(user.uid) // Berhasil, kembalikan UID
+                Result.success(user.uid)
             } else {
                 Result.failure(Exception("Pengguna tidak ditemukan"))
             }
         } catch (e: Exception) {
-            // Gagal (misal: sandi salah atau internet mati)
             Result.failure(e)
         }
     }
+
+    // Fungsi baru untuk verifikasi status aktif di database PostgreSQL
+    // Fungsi untuk mengambil data user aktif dari backend
+    suspend fun checkUserActiveStatus() = userRepository.getCurrentUser()
 }

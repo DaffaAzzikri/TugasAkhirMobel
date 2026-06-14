@@ -2,8 +2,6 @@ package com.example.tugasakhirmobel.ui.screens.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.tugasakhirmobel.data.remote.RetrofitClient
-import com.example.tugasakhirmobel.data.remote.api.AuthApiService
 import com.example.tugasakhirmobel.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +10,6 @@ import kotlinx.coroutines.launch
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
-// Pembungkus status layar
 sealed class AuthState {
     object Idle : AuthState()
     object Loading : AuthState()
@@ -35,40 +32,30 @@ class AuthViewModel @Inject constructor(
 
         _authState.value = AuthState.Loading
 
-        // Jalankan perintah ke Repositori di background thread
         viewModelScope.launch {
-            val hasil = repository.doLogin(email, sandi)
+            // 1. Validasi Firebase
+            val hasilFirebase = repository.doLogin(email, sandi)
 
-            // Evaluasi hasil dari Repositori
-            hasil.fold(
+            hasilFirebase.fold(
                 onSuccess = { uid ->
-                    _authState.value = AuthState.Success
+                    // 2. SINKRONISASI DATABASE (Cek is_active di PostgreSQL)
+                    try {
+                        val response = repository.checkUserActiveStatus()
+                        if (response.isSuccessful) {
+                            // Jika Backend OK, berarti user Aktif
+                            _authState.value = AuthState.Success
+                        } else {
+                            // User mungkin is_active = false
+                            _authState.value = AuthState.Error("Akun Anda dinonaktifkan oleh Super Admin.")
+                        }
+                    } catch (e: Exception) {
+                        _authState.value = AuthState.Error("Gagal verifikasi database: ${e.message}")
+                    }
                 },
                 onFailure = { error ->
-                    val pesanError = error.localizedMessage ?: "Terjadi kesalahan saat login"
-                    _authState.value = AuthState.Error(pesanError)
+                    _authState.value = AuthState.Error("Email atau password salah.")
                 }
             )
-        }
-    } // <-- PERBAIKAN: Di sini fungsi login() harusnya ditutup!
-
-    // SEKARANG FUNGSI INI SUDAH SEJAJAR DI DALAM CLASS VIEWMODEL
-    fun testKoneksiKeFastAPI() {
-        viewModelScope.launch {
-            try {
-                _authState.value = AuthState.Loading
-                val apiService = RetrofitClient.instance.create(AuthApiService::class.java)
-                val response = apiService.pingServer()
-
-                if (response.isSuccessful) {
-                    println("🔥 PING BERHASIL: ${response.body()}")
-                    _authState.value = AuthState.Success
-                } else {
-                    _authState.value = AuthState.Error("Gagal: ${response.code()}")
-                }
-            } catch (e: Exception) {
-                _authState.value = AuthState.Error("Koneksi Error: ${e.message}")
-            }
         }
     }
 

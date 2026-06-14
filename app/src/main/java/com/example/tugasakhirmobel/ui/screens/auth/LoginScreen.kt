@@ -4,6 +4,8 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Inventory2
@@ -17,7 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -30,22 +36,36 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit
 ) {
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Memantau state autentikasi dari ViewModel
+    // 1. Observe state login dari ViewModel
     val authState by viewModel.authState.collectAsState()
 
-    // Logika Navigasi dan Feedback berdasarkan State
+    // Fungsi pembantu untuk eksekusi login
+    val attemptLogin = {
+        if (email.isBlank() || password.isBlank()) {
+            Toast.makeText(context, "Email dan password wajib diisi!", Toast.LENGTH_SHORT).show()
+        } else {
+            keyboardController?.hide()
+            focusManager.clearFocus()
+            viewModel.login(email, password)
+        }
+    }
+
+    // 2. Navigasi HANYA terjadi jika state berubah menjadi Success
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.Success -> {
-                onLoginSuccess() // Navigasi ke Dashboard
+                onLoginSuccess() // Pindah ke Dashboard
                 viewModel.resetState()
             }
             is AuthState.Error -> {
-                // Tampilkan pesan error asli dari Firebase
+                // Tampilkan pesan error asli (Firebase / Backend)
                 Toast.makeText(context, (authState as AuthState.Error).message, Toast.LENGTH_LONG).show()
                 viewModel.resetState()
             }
@@ -95,12 +115,12 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Text("Email", color = Color.White, fontSize = 12.sp, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
+                    // Input Email
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
-                        placeholder = { Text("Masukkan email", color = Color.White.copy(alpha = 0.6f)) },
-                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = Color.White.copy(alpha = 0.6f)) },
+                        placeholder = { Text("Email", color = Color.White.copy(alpha = 0.6f)) },
+                        leadingIcon = { Icon(Icons.Default.Email, null, tint = Color.White.copy(alpha = 0.6f)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -110,22 +130,26 @@ fun LoginScreen(
                             unfocusedTextColor = Color.White
                         ),
                         singleLine = true,
-                        enabled = authState !is AuthState.Loading
+                        enabled = authState !is AuthState.Loading,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        )
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text("Password", color = Color.White, fontSize = 12.sp, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
+                    // Input Password
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
-                        placeholder = { Text("Masukkan password", color = Color.White.copy(alpha = 0.6f)) },
-                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = Color.White.copy(alpha = 0.6f)) },
+                        placeholder = { Text("Password", color = Color.White.copy(alpha = 0.6f)) },
+                        leadingIcon = { Icon(Icons.Default.Lock, null, tint = Color.White.copy(alpha = 0.6f)) },
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
                                     imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                    contentDescription = "Toggle Password",
+                                    contentDescription = null,
                                     tint = Color.White.copy(alpha = 0.6f)
                                 )
                             }
@@ -140,17 +164,25 @@ fun LoginScreen(
                             unfocusedTextColor = Color.White
                         ),
                         singleLine = true,
-                        enabled = authState !is AuthState.Loading
+                        enabled = authState !is AuthState.Loading,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { attemptLogin() }
+                        )
                     )
 
                     Spacer(modifier = Modifier.height(32.dp))
 
+                    // Tombol Login - SEKARANG AMAN
                     Button(
-                        onClick = { viewModel.login(email, password) }, // Memanggil fungsi login asli
+                        onClick = { attemptLogin() },
                         modifier = Modifier.fillMaxWidth().height(50.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                         shape = RoundedCornerShape(25.dp),
-                        enabled = authState !is AuthState.Loading // Disable saat proses berlangsung
+                        enabled = authState !is AuthState.Loading
                     ) {
                         if (authState is AuthState.Loading) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color(0xFF7B1FA2), strokeWidth = 2.dp)
@@ -160,7 +192,6 @@ fun LoginScreen(
                     }
                 }
             }
-
             Spacer(modifier = Modifier.height(16.dp))
             Text("v1.0.0 — UAS Pemrograman Mobile © 2026", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
         }

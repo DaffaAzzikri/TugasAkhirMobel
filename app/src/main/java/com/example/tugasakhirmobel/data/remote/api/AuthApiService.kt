@@ -1,12 +1,11 @@
 package com.example.tugasakhirmobel.data.remote.api
 
+import com.example.tugasakhirmobel.data.remote.model.UserModel
 import retrofit2.Response
 import retrofit2.http.GET
 
 interface AuthApiService {
-
-    // Rute endpoint FastAPI Anda (tanpa garis miring di awal karena sudah ada di BASE_URL)
+    // Mengambil data user yang sedang login dari PostgreSQL via Token Firebase
     @GET("api/v1/auth/me")
-    suspend fun pingServer(): Response<Map<String, String>>
-
+    suspend fun getCurrentUser(): Response<UserModel>
 }

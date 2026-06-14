@@ -113,8 +113,16 @@ fun ManajemenAkunScreen(
             if (selectedTab == "Semua" || user.role == selectedTab) {
                 Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
                     UserItemCard(
-                        name = user.nama, email = user.email, role = user.role, isActive = user.isActive,
-                        onEditClick = { userNameToEdit = user.nama; userIdToEdit = user.id; userStatusToEdit = user.isActive; showEditDialog = true }
+                        name = user.nama.orEmpty(),
+                        email = user.email.orEmpty(),
+                        role = user.role.orEmpty(),
+                        isActive = user.isActive,
+                        onEditClick = {
+                            userNameToEdit = user.nama.orEmpty()
+                            userIdToEdit = user.id
+                            userStatusToEdit = user.isActive
+                            showEditDialog = true
+                        }
                     )
                 }
             }

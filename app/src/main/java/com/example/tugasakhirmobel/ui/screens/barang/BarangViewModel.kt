@@ -57,10 +57,10 @@ class BarangViewModel @Inject constructor(
                 if (response.isSuccessful) {
                     val remoteData = response.body()?.data ?: emptyList()
                     
-                    // 2. Jika berhasil, simpan/update ke database lokal (Room)
+                    // 2. Jika berhasil, simpan/update ke database lokal (Room) sebagai cache
                     repository.saveBarangLocal(remoteData)
                     
-                    // 3. Tampilkan data dari API ke UI
+                    // 3. Tampilkan data remote ke UI
                     _barangList.value = remoteData
                 } else {
                     // 4. Jika API gagal (misal server down), ambil dari cache lokal Room
@@ -103,9 +103,9 @@ class BarangViewModel @Inject constructor(
                 hasil.fold(
                     onSuccess = {
                         _barangState.value = BarangState.Success
-                        loadBarang() // Sinkronisasi API & Room setelah tambah berhasil
+                        loadBarang() // Panggil loadBarang agar lokal dan remote sinkron
                     },
-                    onFailure = { _barangState.value = BarangState.Error("Gagal menyimpan data") }
+                    onFailure = { _barangState.value = BarangState.Error("Gagal menyimpan data ke server") }
                 )
             } catch (e: Exception) {
                 _barangState.value = BarangState.Error(e.localizedMessage ?: "Gagal")
@@ -133,7 +133,7 @@ class BarangViewModel @Inject constructor(
                 val response = repository.updateBarang(id, request)
                 if (response.isSuccessful) {
                     _barangState.value = BarangState.Success
-                    loadBarang() // Sinkronisasi API & Room setelah update berhasil
+                    loadBarang() // Sinkronisasi otomatis
                 } else {
                     _barangState.value = BarangState.Error("Gagal memperbarui data")
                 }
@@ -150,7 +150,7 @@ class BarangViewModel @Inject constructor(
                 val response = repository.hapusBarang(id)
                 if (response.isSuccessful) {
                     _barangState.value = BarangState.Success
-                    loadBarang() // Sinkronisasi API & Room setelah hapus berhasil
+                    loadBarang() // Sinkronisasi otomatis
                 } else {
                     _barangState.value = BarangState.Error("Gagal menghapus barang")
                 }
@@ -174,7 +174,7 @@ class BarangViewModel @Inject constructor(
                 val response = riwayatRepository.transaksi(request)
                 if (response.isSuccessful) {
                     _barangState.value = BarangState.Success
-                    loadBarang() // Sinkronisasi API & Room setelah transaksi stok berhasil
+                    loadBarang() // Refresh sinkronisasi API & Room
                 } else {
                     _barangState.value = BarangState.Error("Gagal memproses transaksi")
                 }
