@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,10 +24,22 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+
+fun getLogProperties(actionType: String): Pair<ImageVector, Color> {
+    return when (actionType.lowercase()) {
+        "tambah barang" -> Pair(Icons.Default.Add, Color(0xFF10B981))
+        "stok masuk" -> Pair(Icons.Default.NorthEast, Color(0xFF3B82F6))
+        "edit barang" -> Pair(Icons.Default.Edit, Color(0xFF8B5CF6))
+        "hapus barang" -> Pair(Icons.Default.Delete, Color(0xFFEF4444))
+        else -> Pair(Icons.Default.Info, Color.Gray)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LogScreen() {
+fun LogScreen(viewModel: LogViewModel = hiltViewModel()) { // Injeksi ViewModel
+    val logList by viewModel.logList.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("Semua") }
 
@@ -34,7 +47,21 @@ fun LogScreen() {
         colors = listOf(Color(0xFF6A1B9A), Color(0xFFC62828))
     )
 
-    // 👇 1. UBAH COLUMN TERLUAR MENJADI LAZYCOLUMN 👇
+    // 1. Logika Filter dan Pencarian Real-time
+    val filteredLogs = logList.filter { log ->
+        val matchesSearch = log.aksi.contains(searchQuery, ignoreCase = true) ||
+                log.namaAdmin.contains(searchQuery, ignoreCase = true)
+        val matchesFilter = if (selectedFilter == "Semua") true else log.aksi.equals(selectedFilter, ignoreCase = true)
+
+        matchesSearch && matchesFilter
+    }
+
+    // 2. Pengelompokan Data Berdasarkan Tanggal secara Otomatis
+    // Mengasumsikan format field `waktu` dari API menggunakan spasi pemisah (e.g., "2026-06-14 09:00:00")
+    val groupedLogs = filteredLogs.groupBy { log ->
+        if (log.waktu.contains(" ")) log.waktu.substringBefore(" ") else log.waktu
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -42,7 +69,7 @@ fun LogScreen() {
         contentPadding = PaddingValues(bottom = 100.dp) // Jarak aman navbar
     ) {
 
-        // 👇 2. BUNGKUS HEADER DENGAN item { } 👇
+        // HEADER DENGAN SEARCH BAR
         item {
             Box(
                 modifier = Modifier
@@ -82,7 +109,7 @@ fun LogScreen() {
             }
         }
 
-        // 👇 3. BUNGKUS FILTER DENGAN item { } 👇
+        // HORIZONTAL FILTER TAB
         item {
             Row(
                 modifier = Modifier
@@ -98,48 +125,40 @@ fun LogScreen() {
             }
         }
 
-        // 👇 4. LIST ITEM LANGSUNG DITULIS (Tidak perlu LazyColumn lagi karena sudah di dalam) 👇
-        item { DateHeader("09/06/2026") }
-        item {
-            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
-                LogItemCard(
-                    actionType = "Tambah Barang",
-                    productName = "Laptop Asus VivoBook 15",
-                    description = "Produk baru ditambahkan ke sistem",
-                    operator = "Admin Budi",
-                    time = "09:00",
-                    icon = Icons.Default.Add,
-                    tintColor = Color(0xFF10B981)
-                )
+        // RENDER DATA DINAMIS DARI API (Menggantikan data dummy)
+        if (groupedLogs.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "Tidak ada riwayat log ditemukan", color = Color.Gray, fontSize = 14.sp)
+                }
             }
-        }
-        item {
-            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
-                LogItemCard(
-                    actionType = "Stok Masuk",
-                    productName = "Laptop Asus VivoBook 15",
-                    description = "+5 unit dari supplier PT Asus Indonesia",
-                    operator = "Admin Budi",
-                    time = "09:15",
-                    icon = Icons.Default.NorthEast,
-                    tintColor = Color(0xFF3B82F6)
-                )
-            }
-        }
+        } else {
+            groupedLogs.forEach { (date, logsInDate) ->
+                item {
+                    DateHeader(date = date)
+                }
 
-        item { Spacer(modifier = Modifier.height(8.dp)) }
-        item { DateHeader("08/06/2026") }
-        item {
-            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
-                LogItemCard(
-                    actionType = "Edit Barang",
-                    productName = "Mouse Wireless Logitech",
-                    description = "Mengubah batas stok minimum",
-                    operator = "Admin Sari",
-                    time = "14:30",
-                    icon = Icons.Default.Edit,
-                    tintColor = Color(0xFF8B5CF6)
-                )
+                items(logsInDate) { log ->
+                    val (icon, color) = getLogProperties(log.aksi)
+                    val timeOnly = if (log.waktu.contains(" ")) log.waktu.substringAfter(" ") else log.waktu
+
+                    Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+                        LogItemCard(
+                            actionType = log.aksi,
+                            productName = log.aksi, // Karena data model tidak membawa properti nama barang, kita tampilkan tipe aksinya
+                            description = "Aktivitas tercatat dengan ID Log: #${log.id}",
+                            operator = log.namaAdmin,
+                            time = timeOnly,
+                            icon = icon,
+                            tintColor = color
+                        )
+                    }
+                }
             }
         }
     }
