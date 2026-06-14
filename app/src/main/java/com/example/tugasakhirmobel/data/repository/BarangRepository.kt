@@ -1,8 +1,12 @@
 package com.example.tugasakhirmobel.data.repository
 
+import com.example.tugasakhirmobel.data.local.dao.BarangDao
+import com.example.tugasakhirmobel.data.local.toEntity
+import com.example.tugasakhirmobel.data.local.toModel
 import com.example.tugasakhirmobel.data.remote.api.BarangApiService
 import com.example.tugasakhirmobel.data.remote.RetrofitClient
 import com.example.tugasakhirmobel.data.remote.model.BarangListResponse
+import com.example.tugasakhirmobel.data.remote.model.BarangModel
 import com.example.tugasakhirmobel.data.remote.model.BarangRequest
 import okhttp3.MultipartBody
 import retrofit2.Response
@@ -10,9 +14,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class BarangRepository @Inject constructor() {
+class BarangRepository @Inject constructor(
+    private val barangDao: BarangDao
+) {
 
     private val apiService = RetrofitClient.instance.create(BarangApiService::class.java)
+
+    // --- Remote API ---
 
     suspend fun fetchSemuaBarang(): Response<BarangListResponse> = apiService.fetchSemuaBarang()
 
@@ -48,4 +56,20 @@ class BarangRepository @Inject constructor() {
         apiService.updateBarang(id, request)
 
     suspend fun hapusBarang(id: Int): Response<Map<String, Any>> = apiService.deleteBarang(id)
+
+    // --- Local Room Cache ---
+
+    suspend fun getBarangLocal(): List<BarangModel> {
+        return barangDao.getAllBarang().map { it.toModel() }
+    }
+
+    suspend fun saveBarangLocal(barangList: List<BarangModel>) {
+        // Kita timpa data lama dengan data baru dari API
+        barangDao.clearAll()
+        barangDao.insertAll(barangList.map { it.toEntity() })
+    }
+
+    suspend fun clearBarangLocal() {
+        barangDao.clearAll()
+    }
 }

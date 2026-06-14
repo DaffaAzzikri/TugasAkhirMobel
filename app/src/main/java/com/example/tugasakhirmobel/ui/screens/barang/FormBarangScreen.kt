@@ -175,7 +175,6 @@ fun FormBarangScreen(
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         CustomLabel("Stok Minimum")
-                        // 👇 UBAH BARIS INI 👇
                         CustomInputField(value = minStock, onValueChange = { minStock = it }, placeholder = "0")
                     }
                 }
