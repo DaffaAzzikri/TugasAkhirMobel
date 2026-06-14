@@ -31,75 +31,77 @@ fun LogScreen() {
     var selectedFilter by remember { mutableStateOf("Semua") }
 
     val gradientHeader = Brush.verticalGradient(
-        colors = listOf(Color(0xFF6A1B9A), Color(0xFFC62828)) // Biru ke Merah
+        colors = listOf(Color(0xFF6A1B9A), Color(0xFFC62828))
     )
 
-    Column(
+    // 👇 1. UBAH COLUMN TERLUAR MENJADI LAZYCOLUMN 👇
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F7FA))
+            .background(Color(0xFFF5F7FA)),
+        contentPadding = PaddingValues(bottom = 100.dp) // Jarak aman navbar
     ) {
-        // --- 1. HEADER SECTION ---
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(gradientHeader)
-                .padding(horizontal = 20.dp, vertical = 24.dp)
-        ) {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Outlined.Shield, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Log Admin", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+
+        // 👇 2. BUNGKUS HEADER DENGAN item { } 👇
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(gradientHeader)
+                    .padding(horizontal = 20.dp, vertical = 24.dp)
+            ) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.Shield, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Log Admin", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("Riwayat semua perubahan oleh administrator", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Cari produk, akun, atau admin...", color = Color.White.copy(alpha = 0.6f)) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Cari", tint = Color.White.copy(alpha = 0.7f)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White.copy(alpha = 0.15f),
+                            unfocusedContainerColor = Color.White.copy(alpha = 0.15f),
+                            focusedBorderColor = Color.Transparent,
+                            unfocusedBorderColor = Color.Transparent,
+                            focusedTextColor = Color.White,
+                            cursorColor = Color.White
+                        ),
+                        singleLine = true
+                    )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text("Riwayat semua perubahan oleh administrator", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Cari produk, akun, atau admin...", color = Color.White.copy(alpha = 0.6f)) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Cari", tint = Color.White.copy(alpha = 0.7f)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.White.copy(alpha = 0.15f),
-                        unfocusedContainerColor = Color.White.copy(alpha = 0.15f),
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent,
-                        focusedTextColor = Color.White,
-                        cursorColor = Color.White
-                    ),
-                    singleLine = true
-                )
             }
         }
 
-        // --- 2. FILTER SECTION ---
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp)
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            FilterTab(text = "Semua", isSelected = selectedFilter == "Semua", onClick = { selectedFilter = "Semua" }, isGradient = true)
-            FilterTab(text = "Tambah Barang", isSelected = selectedFilter == "Tambah Barang", onClick = { selectedFilter = "Tambah Barang" })
-            FilterTab(text = "Edit Barang", isSelected = selectedFilter == "Edit Barang", onClick = { selectedFilter = "Edit Barang" })
-            FilterTab(text = "Hapus Barang", isSelected = selectedFilter == "Hapus Barang", onClick = { selectedFilter = "Hapus Barang" })
+        // 👇 3. BUNGKUS FILTER DENGAN item { } 👇
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                FilterTab(text = "Semua", isSelected = selectedFilter == "Semua", onClick = { selectedFilter = "Semua" }, isGradient = true)
+                FilterTab(text = "Tambah Barang", isSelected = selectedFilter == "Tambah Barang", onClick = { selectedFilter = "Tambah Barang" })
+                FilterTab(text = "Edit Barang", isSelected = selectedFilter == "Edit Barang", onClick = { selectedFilter = "Edit Barang" })
+                FilterTab(text = "Hapus Barang", isSelected = selectedFilter == "Hapus Barang", onClick = { selectedFilter = "Hapus Barang" })
+            }
         }
 
-        // --- 3. LIST LOG ---
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 100.dp) // Jarak aman untuk Navbar
-        ) {
-            // Kelompok Tanggal 1
-            item { DateHeader("09/06/2026") }
-            item {
+        // 👇 4. LIST ITEM LANGSUNG DITULIS (Tidak perlu LazyColumn lagi karena sudah di dalam) 👇
+        item { DateHeader("09/06/2026") }
+        item {
+            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
                 LogItemCard(
                     actionType = "Tambah Barang",
                     productName = "Laptop Asus VivoBook 15",
@@ -107,10 +109,12 @@ fun LogScreen() {
                     operator = "Admin Budi",
                     time = "09:00",
                     icon = Icons.Default.Add,
-                    tintColor = Color(0xFF10B981) // Hijau
+                    tintColor = Color(0xFF10B981)
                 )
             }
-            item {
+        }
+        item {
+            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
                 LogItemCard(
                     actionType = "Stok Masuk",
                     productName = "Laptop Asus VivoBook 15",
@@ -118,14 +122,15 @@ fun LogScreen() {
                     operator = "Admin Budi",
                     time = "09:15",
                     icon = Icons.Default.NorthEast,
-                    tintColor = Color(0xFF3B82F6) // Biru
+                    tintColor = Color(0xFF3B82F6)
                 )
             }
+        }
 
-            // Kelompok Tanggal 2
-            item { Spacer(modifier = Modifier.height(8.dp)) }
-            item { DateHeader("08/06/2026") }
-            item {
+        item { Spacer(modifier = Modifier.height(8.dp)) }
+        item { DateHeader("08/06/2026") }
+        item {
+            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
                 LogItemCard(
                     actionType = "Edit Barang",
                     productName = "Mouse Wireless Logitech",
@@ -133,7 +138,7 @@ fun LogScreen() {
                     operator = "Admin Sari",
                     time = "14:30",
                     icon = Icons.Default.Edit,
-                    tintColor = Color(0xFF8B5CF6) // Ungu
+                    tintColor = Color(0xFF8B5CF6)
                 )
             }
         }

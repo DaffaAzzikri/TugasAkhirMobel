@@ -54,106 +54,67 @@ fun ManajemenAkunScreen(
 
     val gradientHeader = Brush.verticalGradient(listOf(Color(0xFF6A1B9A), Color(0xFFC62828)))
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA))) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA)),
+        contentPadding = PaddingValues(bottom = 100.dp)
+    ) {
         // --- 1. HEADER ---
-        Box(modifier = Modifier.fillMaxWidth().background(gradientHeader).padding(top = 32.dp, bottom = 24.dp, start = 20.dp, end = 20.dp)) {
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = onBackClick, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali", tint = Color.White)
+        item {
+            Box(modifier = Modifier.fillMaxWidth().background(gradientHeader).padding(top = 32.dp, bottom = 24.dp, start = 20.dp, end = 20.dp)) {
+                Column {
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onBackClick, modifier = Modifier.size(36.dp)) { Icon(Icons.Default.ArrowBack, contentDescription = "Kembali", tint = Color.White) }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Manajemen Akun", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                            Text("Kelola semua pengguna sistem", color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
+                        }
+                        Button(onClick = { showTambahDialog = true }, colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.2f)), shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)) {
+                            Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Tambah", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Manajemen Akun", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                        Text("Kelola semua pengguna sistem", color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    val totalUser = userList.size
+                    val totalSuperAdmin = userList.count { it.role == "Super Admin" }
+                    val totalAdmin = userList.count { it.role == "Admin" }
+                    val totalNonaktif = userList.count { !it.isActive }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        MiniStatBox(modifier = Modifier.weight(1f), label = "Total", count = totalUser.toString(), color = Color(0xFF5C6BC0))
+                        MiniStatBox(modifier = Modifier.weight(1f), label = "Super Admin", count = totalSuperAdmin.toString(), color = Color(0xFFFBC02D))
+                        MiniStatBox(modifier = Modifier.weight(1f), label = "Admin", count = totalAdmin.toString(), color = Color(0xFF42A5F5))
+                        MiniStatBox(modifier = Modifier.weight(1f), label = "Nonaktif", count = totalNonaktif.toString(), color = Color(0xFFEF5350))
                     }
-                    Button(
-                        onClick = { showTambahDialog = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.2f)),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Tambah", color = Color.White, fontWeight = FontWeight.Bold)
-                    }
+                    Spacer(modifier = Modifier.height(20.dp))
+                    OutlinedTextField(
+                        value = searchQuery, onValueChange = { searchQuery = it }, placeholder = { Text("Cari nama atau email...", color = Color.White.copy(alpha = 0.6f)) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.White) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color.White.copy(alpha = 0.15f), unfocusedContainerColor = Color.White.copy(alpha = 0.15f), focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent, focusedTextColor = Color.White, cursorColor = Color.White),
+                        singleLine = true
+                    )
                 }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Menghitung statistik secara dinamis dari data asli
-                val totalUser = userList.size
-                val totalSuperAdmin = userList.count { it.role == "Super Admin" }
-                val totalAdmin = userList.count { it.role == "Admin" }
-                val totalNonaktif = userList.count { !it.isActive }
-
-                // Stats Row
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MiniStatBox(modifier = Modifier.weight(1f), label = "Total", count = totalUser.toString(), color = Color(0xFF5C6BC0))
-                    MiniStatBox(modifier = Modifier.weight(1f), label = "Super Admin", count = totalSuperAdmin.toString(), color = Color(0xFFFBC02D))
-                    MiniStatBox(modifier = Modifier.weight(1f), label = "Admin", count = totalAdmin.toString(), color = Color(0xFF42A5F5))
-                    MiniStatBox(modifier = Modifier.weight(1f), label = "Nonaktif", count = totalNonaktif.toString(), color = Color(0xFFEF5350))
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Cari nama atau email...", color = Color.White.copy(alpha = 0.6f)) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.White) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.White.copy(alpha = 0.15f),
-                        unfocusedContainerColor = Color.White.copy(alpha = 0.15f),
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent,
-                        focusedTextColor = Color.White,
-                        cursorColor = Color.White
-                    ),
-                    singleLine = true
-                )
             }
         }
 
         // --- 2. FILTER TAB ---
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp).horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            FilterBadge(text = "Semua", isSelected = selectedTab == "Semua", onClick = { selectedTab = "Semua" })
-            FilterBadge(text = "Super Admin", isSelected = selectedTab == "Super Admin", onClick = { selectedTab = "Super Admin" })
-            FilterBadge(text = "Admin", isSelected = selectedTab == "Admin", onClick = { selectedTab = "Admin" })
+        item {
+            Row(modifier = Modifier.fillMaxWidth().padding(16.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FilterBadge(text = "Semua", isSelected = selectedTab == "Semua", onClick = { selectedTab = "Semua" })
+                FilterBadge(text = "Super Admin", isSelected = selectedTab == "Super Admin", onClick = { selectedTab = "Super Admin" })
+                FilterBadge(text = "Admin", isSelected = selectedTab == "Admin", onClick = { selectedTab = "Admin" })
+            }
         }
 
         // --- 3. LIST USER ---
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 20.dp)
-        ) {
-            items(userList) { user ->
-                // Logika Filter Tab
-                val isVisible = selectedTab == "Semua" || user.role == selectedTab
-
-                if (isVisible) {
+        items(userList) { user ->
+            if (selectedTab == "Semua" || user.role == selectedTab) {
+                Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
                     UserItemCard(
-                        name = user.nama,
-                        email = user.email,
-                        role = user.role,
-                        isMe = false, // Bisa diganti jika sudah ada sesi login
-                        isActive = user.isActive,
-                        onEditClick = {
-                            // Simpan data target ke state sebelum buka dialog
-                            userNameToEdit = user.nama
-                            userIdToEdit = user.id
-                            userStatusToEdit = user.isActive
-                            showEditDialog = true
-                        }
+                        name = user.nama, email = user.email, role = user.role, isActive = user.isActive,
+                        onEditClick = { userNameToEdit = user.nama; userIdToEdit = user.id; userStatusToEdit = user.isActive; showEditDialog = true }
                     )
                 }
             }
@@ -361,8 +322,8 @@ fun RoleSelectionBox(modifier: Modifier, text: String, icon: androidx.compose.ui
 fun MiniStatBox(modifier: Modifier, label: String, count: String, color: Color) {
     Box(modifier = modifier.height(65.dp).background(color.copy(alpha = 0.2f), RoundedCornerShape(12.dp)).padding(8.dp)) {
         Column {
-            Text(count, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            Text(label, color = Color.White.copy(alpha = 0.8f), fontSize = 10.sp)
+            Text(count, color = color, fontWeight = FontWeight.Bold, fontSize = 18.sp) // Warna teks mengikuti warna tema (Kontras)
+            Text(label, color = Color.DarkGray, fontSize = 10.sp, fontWeight = FontWeight.Medium) // Label menjadi abu-abu gelap agar jelas
         }
     }
 }
