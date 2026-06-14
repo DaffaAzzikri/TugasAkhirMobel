@@ -57,5 +57,6 @@ Aplikasi ini menerapkan arsitektur berlapis (**Layered Architecture**) dengan po
 * **Role-based Access:** Model `UserModel` mendukung field `role` untuk membedakan hak akses Super Admin dan Admin biasa.
 * **Offline Caching:** Room Database digunakan untuk menyimpan data barang secara lokal agar aplikasi tetap bisa menampilkan data saat koneksi terputus.
 
+Link Github Repo API: https://github.com/DaffaAzzikri/API-Mobin
 ---
 *Universitas Lambung Mangkurat*
