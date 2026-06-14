@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
     // Perbaikan: Base URL harus diawali dengan http:// atau https:// dan diakhiri dengan /
-    private const val BASE_URL = "http://192.168.1.17:8000/"
+    private const val BASE_URL = "http://192.168.1.6:8000/"
     
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

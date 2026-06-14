@@ -37,6 +37,9 @@ fun BrowseScreen(
     // State untuk Dialog Delete
     var showDeleteDialog by remember { mutableStateOf(false) }
     var itemToDelete by remember { mutableStateOf<BarangModel?>(null) }
+    var showStokDialog by remember { mutableStateOf(false) }
+    var isStokMasukMode by remember { mutableStateOf(true) }
+    var itemForStokTransaksi by remember { mutableStateOf<BarangModel?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.loadBarang()
@@ -236,6 +239,16 @@ fun BrowseScreen(
                     status = statusText,
                     isAvailable = barang.stok > barang.stokMinimum,
                     imageUrl = barang.imageUrl,
+                    onStokMasuk = {
+                        itemForStokTransaksi = barang
+                        isStokMasukMode = true
+                        showStokDialog = true
+                    },
+                    onStokKeluar = {
+                        itemForStokTransaksi = barang
+                        isStokMasukMode = false
+                        showStokDialog = true
+                    },
                     onEdit = { onEditClick(barang) },
                     onDelete = {
                         itemToDelete = barang
@@ -244,6 +257,123 @@ fun BrowseScreen(
                 )
             }
         }
+    }
+
+    // 👇 3b. INI POP-UP DIALOG UNTUK STOK MASUK/KELUAR 👇
+    if (showStokDialog && itemForStokTransaksi != null) {
+        val isMasuk = isStokMasukMode
+        val title = if (isMasuk) "Stok Masuk" else "Stok Keluar"
+        val buttonColor = if (isMasuk) Color(0xFF0D47A1) else Color(0xFFD32F2F)
+
+        // Buat state penampung input di sini agar bisa mengetik
+        var jumlahInput by remember { mutableStateOf("") }
+        var keteranganInput by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = { showStokDialog = false },
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(title, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    IconButton(onClick = { showStokDialog = false }, modifier = Modifier.size(24.dp)) {
+                        Icon(Icons.Default.Close, contentDescription = "Tutup")
+                    }
+                }
+            },
+            text = {
+                Column {
+                    // Info Barang Singkat
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFF5F7FA), RoundedCornerShape(8.dp))
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Menambahkan coil AsyncImage agar gambar barang asli muncul di pop-up
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(Color.LightGray, RoundedCornerShape(8.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            coil.compose.AsyncImage(
+                                model = itemForStokTransaksi!!.imageUrl,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(itemForStokTransaksi!!.namaBarang, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text("Stok saat ini: ${itemForStokTransaksi!!.stok} unit", fontSize = 12.sp, color = Color.Gray)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Input Jumlah
+                    Text("Jumlah", fontSize = 12.sp, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = jumlahInput,
+                        onValueChange = { input ->
+                            // Validasi: Hanya izinkan angka saja yang masuk
+                            if (input.all { it.isDigit() }) {
+                                jumlahInput = input
+                            }
+                        },
+                        placeholder = { Text("Masukkan jumlah") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Input Keterangan
+                    Text("Keterangan", fontSize = 12.sp, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = keteranganInput,
+                        onValueChange = { keteranganInput = it },
+                        placeholder = { Text("Opsional") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val jumlahLengkap = jumlahInput.toIntOrNull() ?: 0
+                        if (jumlahLengkap > 0) {
+                            // 👇 KODE TODO SUDAH KITA GANTI DENGAN EKSEKUSI NYATA 👇
+                            viewModel.transaksiStok(
+                                id = itemForStokTransaksi!!.id,
+                                jumlahTransaksi = jumlahLengkap,
+                                isMasuk = isMasuk,
+                                keterangan = keteranganInput,
+                                item = itemForStokTransaksi!!
+                            )
+                            showStokDialog = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = jumlahInput.isNotBlank() // Tombol konfirmasi hanya aktif jika jumlah sudah diisi
+                ) {
+                    Text("Konfirmasi", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
     }
 }
 
@@ -257,6 +387,8 @@ fun ProductItemCard(
     status: String,
     isAvailable: Boolean,
     imageUrl: String,
+    onStokMasuk: () -> Unit,  // Tambahan parameter
+    onStokKeluar: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -364,6 +496,13 @@ fun ProductItemCard(
                 Text(price, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0D47A1))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    IconButton(onClick = onStokMasuk, modifier = Modifier.size(32.dp).background(Color(0xFFE8F0FE), CircleShape)) {
+                        Icon(Icons.Default.NorthEast, contentDescription = "Masuk", modifier = Modifier.size(16.dp), tint = Color(0xFF0D47A1))
+                    }
+                    // Tombol Stok Keluar (Merah, Panah Bawah Kanan)
+                    IconButton(onClick = onStokKeluar, modifier = Modifier.size(32.dp).background(Color(0xFFFFEBEE), CircleShape)) {
+                        Icon(Icons.Default.SouthEast, contentDescription = "Keluar", modifier = Modifier.size(16.dp), tint = Color(0xFFD32F2F))
+                    }
                     val btnModifier = Modifier.size(32.dp).background(Color(0xFFF5F7FA), CircleShape)
                     IconButton(onClick = onEdit, modifier = btnModifier) {
                         Icon(Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.size(16.dp))

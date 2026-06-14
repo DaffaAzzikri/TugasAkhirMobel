@@ -141,6 +141,50 @@ class BarangViewModel @Inject constructor(
         }
     }
 
+    fun transaksiStok(id: Int, jumlahTransaksi: Int, isMasuk: Boolean, keterangan: String, item: BarangModel) {
+        _barangState.value = BarangState.Loading
+        viewModelScope.launch {
+            try {
+                // 1. Hitung kalkulasi stok baru secara lokal berdasarkan mode tombol yang ditekan
+                val stokSekarang = item.stok
+                val stokBaru = if (isMasuk) {
+                    stokSekarang + jumlahTransaksi
+                } else {
+                    stokSekarang - jumlahTransaksi
+                }
+
+                // Validasi agar stok tidak minus saat melakukan pengurangan
+                if (stokBaru < 0) {
+                    _barangState.value = BarangState.Error("Gagal: Stok tidak boleh kurang dari 0!")
+                    return@launch
+                }
+
+                // 2. Bungkus ke dalam objek request payload data
+                val request = BarangRequest(
+                    namaBarang = item.namaBarang,
+                    sku = item.sku,
+                    kategori = item.kategori,
+                    harga = item.harga,
+                    supplier = item.supplier,
+                    stok = stokBaru, // Mengirimkan angka stok yang sudah dikalkulasi
+                    stokMinimum = item.stokMinimum,
+                    imageUrl = item.imageUrl
+                )
+
+                // 3. Tembak rute PUT update milik Daffa ke backend
+                val response = repository.updateBarang(id, request)
+                if (response.isSuccessful) {
+                    _barangState.value = BarangState.Success
+                    loadBarang() // Tarik ulang data terbaru agar layar langsung sinkron otomatis
+                } else {
+                    _barangState.value = BarangState.Error("Gagal memperbarui mutasi stok")
+                }
+            } catch (e: Exception) {
+                _barangState.value = BarangState.Error(e.localizedMessage ?: "Terjadi kesalahan koneksi")
+            }
+        }
+    }
+
     private fun uriToFile(uri: Uri, context: Context): File? {
         return try {
             val inputStream = context.contentResolver.openInputStream(uri)
