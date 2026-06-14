@@ -84,11 +84,18 @@ fun ManajemenAkunScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // Menghitung statistik secara dinamis dari data asli
+                val totalUser = userList.size
+                val totalSuperAdmin = userList.count { it.role == "Super Admin" }
+                val totalAdmin = userList.count { it.role == "Admin" }
+                val totalNonaktif = userList.count { !it.isActive }
+
+                // Stats Row
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MiniStatBox(modifier = Modifier.weight(1f), label = "Total", count = "6", color = Color(0xFF5C6BC0))
-                    MiniStatBox(modifier = Modifier.weight(1f), label = "Super Admin", count = "1", color = Color(0xFFFBC02D))
-                    MiniStatBox(modifier = Modifier.weight(1f), label = "Admin", count = "5", color = Color(0xFF42A5F5))
-                    MiniStatBox(modifier = Modifier.weight(1f), label = "Nonaktif", count = "1", color = Color(0xFFEF5350))
+                    MiniStatBox(modifier = Modifier.weight(1f), label = "Total", count = totalUser.toString(), color = Color(0xFF5C6BC0))
+                    MiniStatBox(modifier = Modifier.weight(1f), label = "Super Admin", count = totalSuperAdmin.toString(), color = Color(0xFFFBC02D))
+                    MiniStatBox(modifier = Modifier.weight(1f), label = "Admin", count = totalAdmin.toString(), color = Color(0xFF42A5F5))
+                    MiniStatBox(modifier = Modifier.weight(1f), label = "Nonaktif", count = totalNonaktif.toString(), color = Color(0xFFEF5350))
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -171,8 +178,8 @@ fun ManajemenAkunScreen(
             initialStatus = userStatusToEdit,
             onDismiss = { showEditDialog = false },
             onSave = { namaBaru, statusBaru ->
-                // Tembak API Ubah Status
-                viewModel.ubahStatusUser(userIdToEdit, statusBaru)
+                // 👇 Tembak API Update (Mengirim Nama & Status sekaligus) 👇
+                viewModel.editUser(userIdToEdit, namaBaru, statusBaru)
                 showEditDialog = false
             }
         )
@@ -266,8 +273,8 @@ fun EditPenggunaDialog(
     onDismiss: () -> Unit,
     onSave: (String, Boolean) -> Unit
 ) {
-    var nama by remember { mutableStateOf(initialName) }
-    var isAktif by remember { mutableStateOf(initialStatus) }
+    var nama by remember(initialName) { mutableStateOf(initialName) }
+    var isAktif by remember(initialStatus) { mutableStateOf(initialStatus) }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(

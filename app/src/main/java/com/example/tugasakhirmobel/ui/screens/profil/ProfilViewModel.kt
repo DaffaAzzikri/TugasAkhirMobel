@@ -71,15 +71,18 @@ class ProfilViewModel @Inject constructor(
         }
     }
 
-    fun ubahStatusUser(id: Int, isActive: Boolean) {
+    fun editUser(id: Int, nama: String, isActive: Boolean) {
+        _state.value = ProfilState.Loading
         viewModelScope.launch {
             try {
-                val response = repository.updateStatus(id, isActive)
+                val response = repository.updateUser(id, nama, isActive)
                 if (response.isSuccessful) {
-                    loadUsers() // Refresh UI agar toggle switch terupdate dari server
+                    loadUsers() // Refresh UI agar nama baru dan toggle switch terupdate dari server
+                } else {
+                    _state.value = ProfilState.Error("Gagal memperbarui pengguna")
                 }
             } catch (e: Exception) {
-                _state.value = ProfilState.Error(e.localizedMessage ?: "Gagal ubah status")
+                _state.value = ProfilState.Error(e.localizedMessage ?: "Gagal ubah data")
             }
         }
     }

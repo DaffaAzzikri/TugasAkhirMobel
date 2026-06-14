@@ -29,6 +29,7 @@ data class UserRequest(
 )
 
 // Model untuk mengubah status Aktif/Nonaktif
-data class UserStatusRequest(
+data class UserUpdateRequest(
+    val nama: String,
     @SerializedName("is_active") val isActive: Boolean
 )

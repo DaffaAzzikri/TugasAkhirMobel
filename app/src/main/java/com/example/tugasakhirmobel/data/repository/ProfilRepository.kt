@@ -3,7 +3,7 @@ package com.example.tugasakhirmobel.data.repository
 import com.example.tugasakhirmobel.data.remote.RetrofitClient
 import com.example.tugasakhirmobel.data.remote.api.ProfilApiService
 import com.example.tugasakhirmobel.data.remote.model.UserRequest
-import com.example.tugasakhirmobel.data.remote.model.UserStatusRequest
+import com.example.tugasakhirmobel.data.remote.model.UserUpdateRequest
 import javax.inject.Inject
 
 class ProfilRepository @Inject constructor() {
@@ -15,8 +15,8 @@ class ProfilRepository @Inject constructor() {
 
     suspend fun tambahUser(request: UserRequest) = apiService.tambahUser(request)
 
-    suspend fun updateStatus(id: Int, isActive: Boolean) =
-        apiService.updateStatusUser(id, UserStatusRequest(isActive))
+    suspend fun updateUser(id: Int, nama: String, isActive: Boolean) =
+        apiService.updateUser(id, UserUpdateRequest(nama, isActive))
 
     suspend fun fetchSemuaLog() = apiService.getSemuaLog()
 }

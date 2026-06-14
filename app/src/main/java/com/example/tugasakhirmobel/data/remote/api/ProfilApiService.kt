@@ -15,10 +15,10 @@ interface ProfilApiService {
     @POST("api/v1/users")
     suspend fun tambahUser(@Body request: UserRequest): Response<SingleUserResponse>
 
-    @PUT("api/v1/users/{id}/status")
-    suspend fun updateStatusUser(
+    @PUT("api/v1/users/{id}")
+    suspend fun updateUser(
         @Path("id") userId: Int,
-        @Body request: UserStatusRequest
+        @Body request: UserUpdateRequest
     ): Response<SingleUserResponse>
 
     @GET("api/v1/logs")
