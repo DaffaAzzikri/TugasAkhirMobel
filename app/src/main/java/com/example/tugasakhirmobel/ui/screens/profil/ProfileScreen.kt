@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -28,8 +27,8 @@ fun ProfileScreen(
     onLogoutClick: () -> Unit,
     onManageAccountClick: () -> Unit
 ) {
-    // --- MOCK ROLE (Nanti Daffa yang hubungkan ke Data Asli) ---
-    val userRole = "Superadmin" // Coba ganti ke "Admin" untuk tes sembunyikan menu
+    // --- MOCK ROLE ---
+    val userRole = "Superadmin"
     val userName = "Super Admin"
     val userEmail = "superadmin@mobel.id"
 
@@ -52,7 +51,6 @@ fun ProfileScreen(
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                // Lingkaran Inisial Nama
                 Box(
                     modifier = Modifier
                         .size(100.dp)
@@ -74,7 +72,6 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Badge Role
                 Surface(
                     color = Color(0xFFFFD600),
                     shape = RoundedCornerShape(20.dp)
@@ -91,17 +88,8 @@ fun ProfileScreen(
             }
         }
 
-        // --- 2. INFORMASI AKUN ---
+        // --- 2. DETAIL AKUN TERPADU ---
         Column(modifier = Modifier.padding(20.dp)) {
-            Text("INFORMASI AKUN", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
-            Spacer(modifier = Modifier.height(12.dp))
-
-            ProfileInfoItem(icon = Icons.Default.Person, label = "Nama Lengkap", value = userName)
-            ProfileInfoItem(icon = Icons.Default.Email, label = "Email", value = userEmail)
-            ProfileInfoItem(icon = Icons.Default.Lock, label = "Password", value = "••••••••")
-
-            Spacer(modifier = Modifier.height(24.dp))
-
             Text("DETAIL AKUN", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -111,6 +99,26 @@ fun ProfileScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    // Item yang bisa di-edit (Nama Lengkap)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { /* TODO: Buka dialog ganti nama */ }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF3F51B5), modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("Nama Lengkap", modifier = Modifier.weight(1f), fontSize = 14.sp, color = Color.Gray)
+                        Text(userName, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(Icons.Default.Edit, contentDescription = "Edit Nama", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Color(0xFFF5F7FA))
+
+                    // Item Read-Only
+                    DetailRow(label = "Email", value = userEmail, icon = Icons.Default.Email)
                     DetailRow(label = "Role", value = userRole, icon = Icons.Default.AccountCircle)
                     DetailRow(label = "Akun Dibuat", value = "01/01/2026", icon = Icons.Default.CalendarToday)
                     DetailRow(label = "Login Terakhir", value = "12/06/2026", icon = Icons.Default.History)
@@ -173,28 +181,7 @@ fun ProfileScreen(
                 Text("Keluar dari Akun", color = Color.Red, fontWeight = FontWeight.Bold)
             }
 
-            Spacer(modifier = Modifier.height(100.dp)) // Jarak Navbar
-        }
-    }
-}
-
-@Composable
-fun ProfileInfoItem(icon: ImageVector, label: String, value: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(36.dp).background(Color(0xFFF1F4F9), CircleShape), contentAlignment = Alignment.Center) {
-                Icon(icon, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(18.dp))
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(label, fontSize = 11.sp, color = Color.Gray)
-                Text(value, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            }
-            Icon(Icons.Default.Edit, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.height(100.dp))
         }
     }
 }
