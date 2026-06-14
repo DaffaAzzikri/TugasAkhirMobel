@@ -5,7 +5,8 @@ Aplikasi manajemen inventaris berbasis Android untuk mengelola stok barang, menc
 ## Screenshot Aplikasi
 | Login | Dashboard | Browse Barang |
 | :---: | :---: | :---: |
-| *(Login Screen)* | *(Dashboard Screen)* | *(Browse Screen)* |
+| *(<img width="709" height="1600" alt="image" src="https://github.com/user-attachments/assets/6b7a9e69-47f3-44a9-b00b-3cb2fa7d7e7d" />
+)* | *(Dashboard Screen)* | *(Browse Screen)* |
 
 | Tambah Barang | Riwayat Transaksi | Profil & Log |
 | :---: | :---: | :---: |
