@@ -19,4 +19,7 @@ class DashboardRepository @Inject constructor() {
 
     suspend fun getPerluPerhatian(): Response<BarangListResponse> =
         apiService.getPerluPerhatian()
+
+    suspend fun getPergerakanTerakhir() =
+        apiService.getPergerakanTerakhir()
 }

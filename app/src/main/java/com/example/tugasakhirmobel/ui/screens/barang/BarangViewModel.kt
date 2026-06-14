@@ -1,5 +1,3 @@
-// C:/Users/ACER/TugasAkhirMobel/app/src/main/java/com/example/tugasakhirmobel/ui/screens/barang/BarangViewModel.kt
-
 package com.example.tugasakhirmobel.ui.screens.barang
 
 import android.content.Context
@@ -8,7 +6,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tugasakhirmobel.data.remote.model.BarangModel
 import com.example.tugasakhirmobel.data.remote.model.BarangRequest
+import com.example.tugasakhirmobel.data.remote.model.TransaksiRequest
 import com.example.tugasakhirmobel.data.repository.BarangRepository
+import com.example.tugasakhirmobel.data.repository.RiwayatRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +32,7 @@ sealed class BarangState {
 @HiltViewModel
 class BarangViewModel @Inject constructor(
     private val repository: BarangRepository,
+    private val riwayatRepository: RiwayatRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -45,30 +46,28 @@ class BarangViewModel @Inject constructor(
     var itemToEdit: BarangModel? = null
 
     /**
-     * Mengambil data barang.
-     * Alur: API -> Simpan ke Room -> UI.
-     * Jika API Gagal (Offline/Error): Ambil data dari Room -> UI.
+     * Mengambil data barang dengan strategi API-first dan fallback ke Room Database.
      */
     fun loadBarang() {
         viewModelScope.launch {
             try {
-                // 1. Coba ambil data dari API Remote
+                // 1. Coba ambil data dari API Remote (FastAPI)
                 val response = repository.fetchSemuaBarang()
                 
                 if (response.isSuccessful) {
                     val remoteData = response.body()?.data ?: emptyList()
                     
-                    // 2. Jika berhasil, simpan ke database lokal (Room) sebagai cache
+                    // 2. Jika berhasil, simpan/update ke database lokal (Room)
                     repository.saveBarangLocal(remoteData)
                     
-                    // 3. Tampilkan data remote ke UI
+                    // 3. Tampilkan data dari API ke UI
                     _barangList.value = remoteData
                 } else {
-                    // 4. Jika API gagal (misal server down), ambil dari Room
+                    // 4. Jika API gagal (misal server down), ambil dari cache lokal Room
                     _barangList.value = repository.getBarangLocal()
                 }
             } catch (e: Exception) {
-                // 5. Jika terjadi error (misal tidak ada internet), ambil dari Room
+                // 5. Jika terjadi error (misal tidak ada internet), ambil dari cache lokal Room
                 _barangList.value = repository.getBarangLocal()
                 e.printStackTrace()
             }
@@ -104,7 +103,7 @@ class BarangViewModel @Inject constructor(
                 hasil.fold(
                     onSuccess = {
                         _barangState.value = BarangState.Success
-                        loadBarang() // Panggil loadBarang agar lokal dan remote sinkron
+                        loadBarang() // Sinkronisasi API & Room setelah tambah berhasil
                     },
                     onFailure = { _barangState.value = BarangState.Error("Gagal menyimpan data") }
                 )
@@ -134,7 +133,7 @@ class BarangViewModel @Inject constructor(
                 val response = repository.updateBarang(id, request)
                 if (response.isSuccessful) {
                     _barangState.value = BarangState.Success
-                    loadBarang() // Panggil loadBarang agar lokal dan remote sinkron
+                    loadBarang() // Sinkronisasi API & Room setelah update berhasil
                 } else {
                     _barangState.value = BarangState.Error("Gagal memperbarui data")
                 }
@@ -151,7 +150,7 @@ class BarangViewModel @Inject constructor(
                 val response = repository.hapusBarang(id)
                 if (response.isSuccessful) {
                     _barangState.value = BarangState.Success
-                    loadBarang() // Panggil loadBarang agar lokal dan remote sinkron
+                    loadBarang() // Sinkronisasi API & Room setelah hapus berhasil
                 } else {
                     _barangState.value = BarangState.Error("Gagal menghapus barang")
                 }
@@ -165,35 +164,19 @@ class BarangViewModel @Inject constructor(
         _barangState.value = BarangState.Loading
         viewModelScope.launch {
             try {
-                val stokSekarang = item.stok
-                val stokBaru = if (isMasuk) {
-                    stokSekarang + jumlahTransaksi
-                } else {
-                    stokSekarang - jumlahTransaksi
-                }
-
-                if (stokBaru < 0) {
-                    _barangState.value = BarangState.Error("Gagal: Stok tidak boleh kurang dari 0!")
-                    return@launch
-                }
-
-                val request = BarangRequest(
-                    namaBarang = item.namaBarang,
-                    sku = item.sku,
-                    kategori = item.kategori,
-                    harga = item.harga,
-                    supplier = item.supplier,
-                    stok = stokBaru,
-                    stokMinimum = item.stokMinimum,
-                    imageUrl = item.imageUrl
+                val request = TransaksiRequest(
+                    barangId = id,
+                    jenis = if (isMasuk) "masuk" else "keluar",
+                    jumlah = jumlahTransaksi,
+                    keterangan = keterangan
                 )
 
-                val response = repository.updateBarang(id, request)
+                val response = riwayatRepository.transaksi(request)
                 if (response.isSuccessful) {
                     _barangState.value = BarangState.Success
-                    loadBarang() // Panggil loadBarang agar lokal dan remote sinkron
+                    loadBarang() // Sinkronisasi API & Room setelah transaksi stok berhasil
                 } else {
-                    _barangState.value = BarangState.Error("Gagal memperbarui mutasi stok")
+                    _barangState.value = BarangState.Error("Gagal memproses transaksi")
                 }
             } catch (e: Exception) {
                 _barangState.value = BarangState.Error(e.localizedMessage ?: "Terjadi kesalahan koneksi")
