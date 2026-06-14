@@ -5,12 +5,17 @@ Aplikasi manajemen inventaris berbasis Android untuk mengelola stok barang, menc
 ## Screenshot Aplikasi
 | Login | Dashboard | Browse Barang |
 | :---: | :---: | :---: |
-| *(<img width="709" height="1600" alt="image" src="https://github.com/user-attachments/assets/6b7a9e69-47f3-44a9-b00b-3cb2fa7d7e7d" />
-)* | *(Dashboard Screen)* | *(Browse Screen)* |
+| <img width="709" height="1600" alt="image" src="https://github.com/user-attachments/assets/6b7a9e69-47f3-44a9-b00b-3cb2fa7d7e7d" />
+* | *<img width="709" height="1600" alt="image" src="https://github.com/user-attachments/assets/9f2d49a4-3f5c-4588-8e5b-e119551bbe1e" />
+* | *<img width="709" height="1600" alt="image" src="https://github.com/user-attachments/assets/625f01de-4510-44cf-8ed4-7bb8727db1fb" />
+* |
 
-| Tambah Barang | Riwayat Transaksi | Profil & Log |
+| Log | Riwayat Transaksi | Profil |
 | :---: | :---: | :---: |
-| *(Form Barang)* | *(Riwayat Screen)* | *(Profil Screen)* |
+| *<img width="709" height="1600" alt="image" src="https://github.com/user-attachments/assets/395b0bc3-e382-4726-bed5-642f251a1442" />
+* | *<img width="709" height="1600" alt="image" src="https://github.com/user-attachments/assets/e9a80b70-f732-41cc-b37f-b2ea4cabe128" />
+* | *<img width="709" height="1600" alt="image" src="https://github.com/user-attachments/assets/8ac6fef3-32d0-4e43-97dc-7b5911434743" />
+* |
 
 ## Fitur Utama
 * **Inventory Management:** CRUD (Browse, Tambah, Edit, Hapus) data barang beserta foto produk.
