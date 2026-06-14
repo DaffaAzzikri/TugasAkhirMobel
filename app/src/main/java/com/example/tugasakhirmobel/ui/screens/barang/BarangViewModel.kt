@@ -44,14 +44,34 @@ class BarangViewModel @Inject constructor(
     // State untuk menyimpan item yang akan diedit
     var itemToEdit: BarangModel? = null
 
+    /**
+     * Mengambil data barang.
+     * Alur: API -> Simpan ke Room -> UI.
+     * Jika API Gagal (Offline/Error): Ambil data dari Room -> UI.
+     */
     fun loadBarang() {
         viewModelScope.launch {
             try {
+                // 1. Coba ambil data dari API Remote
                 val response = repository.fetchSemuaBarang()
+                
                 if (response.isSuccessful) {
-                    _barangList.value = response.body()?.data ?: emptyList()
+                    val remoteData = response.body()?.data ?: emptyList()
+                    
+                    // 2. Jika berhasil, simpan ke database lokal (Room) sebagai cache
+                    repository.saveBarangLocal(remoteData)
+                    
+                    // 3. Tampilkan data remote ke UI
+                    _barangList.value = remoteData
+                } else {
+                    // 4. Jika API gagal (misal server down), ambil dari Room
+                    _barangList.value = repository.getBarangLocal()
                 }
-            } catch (e: Exception) { e.printStackTrace() }
+            } catch (e: Exception) {
+                // 5. Jika terjadi error (misal tidak ada internet), ambil dari Room
+                _barangList.value = repository.getBarangLocal()
+                e.printStackTrace()
+            }
         }
     }
 
@@ -84,7 +104,7 @@ class BarangViewModel @Inject constructor(
                 hasil.fold(
                     onSuccess = {
                         _barangState.value = BarangState.Success
-                        loadBarang()
+                        loadBarang() // Panggil loadBarang agar lokal dan remote sinkron
                     },
                     onFailure = { _barangState.value = BarangState.Error("Gagal menyimpan data") }
                 )
@@ -114,7 +134,7 @@ class BarangViewModel @Inject constructor(
                 val response = repository.updateBarang(id, request)
                 if (response.isSuccessful) {
                     _barangState.value = BarangState.Success
-                    loadBarang()
+                    loadBarang() // Panggil loadBarang agar lokal dan remote sinkron
                 } else {
                     _barangState.value = BarangState.Error("Gagal memperbarui data")
                 }
@@ -131,7 +151,7 @@ class BarangViewModel @Inject constructor(
                 val response = repository.hapusBarang(id)
                 if (response.isSuccessful) {
                     _barangState.value = BarangState.Success
-                    loadBarang()
+                    loadBarang() // Panggil loadBarang agar lokal dan remote sinkron
                 } else {
                     _barangState.value = BarangState.Error("Gagal menghapus barang")
                 }
@@ -145,7 +165,6 @@ class BarangViewModel @Inject constructor(
         _barangState.value = BarangState.Loading
         viewModelScope.launch {
             try {
-                // 1. Hitung kalkulasi stok baru secara lokal berdasarkan mode tombol yang ditekan
                 val stokSekarang = item.stok
                 val stokBaru = if (isMasuk) {
                     stokSekarang + jumlahTransaksi
@@ -153,29 +172,26 @@ class BarangViewModel @Inject constructor(
                     stokSekarang - jumlahTransaksi
                 }
 
-                // Validasi agar stok tidak minus saat melakukan pengurangan
                 if (stokBaru < 0) {
                     _barangState.value = BarangState.Error("Gagal: Stok tidak boleh kurang dari 0!")
                     return@launch
                 }
 
-                // 2. Bungkus ke dalam objek request payload data
                 val request = BarangRequest(
                     namaBarang = item.namaBarang,
                     sku = item.sku,
                     kategori = item.kategori,
                     harga = item.harga,
                     supplier = item.supplier,
-                    stok = stokBaru, // Mengirimkan angka stok yang sudah dikalkulasi
+                    stok = stokBaru,
                     stokMinimum = item.stokMinimum,
                     imageUrl = item.imageUrl
                 )
 
-                // 3. Tembak rute PUT update milik Daffa ke backend
                 val response = repository.updateBarang(id, request)
                 if (response.isSuccessful) {
                     _barangState.value = BarangState.Success
-                    loadBarang() // Tarik ulang data terbaru agar layar langsung sinkron otomatis
+                    loadBarang() // Panggil loadBarang agar lokal dan remote sinkron
                 } else {
                     _barangState.value = BarangState.Error("Gagal memperbarui mutasi stok")
                 }

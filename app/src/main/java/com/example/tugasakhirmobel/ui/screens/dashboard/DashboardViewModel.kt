@@ -32,6 +32,10 @@ class DashboardViewModel @Inject constructor(
     private val _state = MutableStateFlow<DashboardState>(DashboardState.Idle)
     val state: StateFlow<DashboardState> = _state.asStateFlow()
 
+    init {
+        loadDashboard()
+    }
+
     fun loadDashboard() {
         viewModelScope.launch {
             _state.value = DashboardState.Loading
