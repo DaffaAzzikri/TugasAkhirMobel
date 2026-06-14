@@ -1,5 +1,6 @@
 package com.example.tugasakhirmobel.ui.screens.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -27,32 +29,44 @@ fun LoginScreen(
     viewModel: AuthViewModel,
     onLoginSuccess: () -> Unit
 ) {
+    val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Efek Gradasi Background (Biru ke Ungu Kemerahan)
+    // Memantau state autentikasi dari ViewModel
+    val authState by viewModel.authState.collectAsState()
+
+    // Logika Navigasi dan Feedback berdasarkan State
+    LaunchedEffect(authState) {
+        when (authState) {
+            is AuthState.Success -> {
+                onLoginSuccess() // Navigasi ke Dashboard
+                viewModel.resetState()
+            }
+            is AuthState.Error -> {
+                // Tampilkan pesan error asli dari Firebase
+                Toast.makeText(context, (authState as AuthState.Error).message, Toast.LENGTH_LONG).show()
+                viewModel.resetState()
+            }
+            else -> {}
+        }
+    }
+
     val backgroundGradient = Brush.verticalGradient(
         colors = listOf(Color(0xFF283593), Color(0xFF7B1FA2), Color(0xFFD32F2F))
     )
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(backgroundGradient),
+        modifier = Modifier.fillMaxSize().background(backgroundGradient),
         contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // --- LOGO & JUDUL ---
             Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(16.dp)),
+                modifier = Modifier.size(60.dp).background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(16.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Default.Inventory2, contentDescription = "Logo", tint = Color.White, modifier = Modifier.size(32.dp))
@@ -63,7 +77,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // --- KOTAK KACA (GLASSMORPHISM) ---
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.15f)),
@@ -73,12 +86,8 @@ fun LoginScreen(
                     modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Hanya ada Tab "Masuk"
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.White, RoundedCornerShape(12.dp))
-                            .padding(vertical = 12.dp),
+                        modifier = Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(12.dp)).padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text("Login", color = Color(0xFF7B1FA2), fontWeight = FontWeight.Bold)
@@ -86,7 +95,6 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Input Email
                     Text("Email", color = Color.White, fontSize = 12.sp, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
                     OutlinedTextField(
                         value = email,
@@ -99,15 +107,14 @@ fun LoginScreen(
                             focusedBorderColor = Color.White,
                             unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
                             focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            cursorColor = Color.White
+                            unfocusedTextColor = Color.White
                         ),
-                        singleLine = true
+                        singleLine = true,
+                        enabled = authState !is AuthState.Loading
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Input Password
                     Text("Password", color = Color.White, fontSize = 12.sp, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
                     OutlinedTextField(
                         value = password,
@@ -130,25 +137,26 @@ fun LoginScreen(
                             focusedBorderColor = Color.White,
                             unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
                             focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            cursorColor = Color.White
+                            unfocusedTextColor = Color.White
                         ),
-                        singleLine = true
+                        singleLine = true,
+                        enabled = authState !is AuthState.Loading
                     )
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // Tombol Login Utama
                     Button(
-                        onClick = {
-                            // TODO: Panggil fungsi login ViewModel nanti
-                            onLoginSuccess()
-                        },
+                        onClick = { viewModel.login(email, password) }, // Memanggil fungsi login asli
                         modifier = Modifier.fillMaxWidth().height(50.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(25.dp)
+                        shape = RoundedCornerShape(25.dp),
+                        enabled = authState !is AuthState.Loading // Disable saat proses berlangsung
                     ) {
-                        Text("Masuk", color = Color(0xFF7B1FA2), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        if (authState is AuthState.Loading) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color(0xFF7B1FA2), strokeWidth = 2.dp)
+                        } else {
+                            Text("Masuk", color = Color(0xFF7B1FA2), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        }
                     }
                 }
             }
